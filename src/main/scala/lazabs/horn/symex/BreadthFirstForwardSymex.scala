@@ -28,9 +28,9 @@
  */
 package lazabs.horn.symex
 
-import ap.util.Combinatorics
 import lazabs.horn.bottomup.HornClauses.ConstraintClause
 import lazabs.horn.bottomup.NormClause
+import lazabs.horn.symex_gnn.clausePriorityGNN.{prioritizeClauses}
 
 import scala.collection.mutable.{Queue => MQueue}
 
@@ -75,7 +75,9 @@ class BreadthFirstForwardSymex[CC](clauses: Iterable[CC])(
   }
 
   override def handleNewUnitClause(electron: UnitClause): Unit = {
-    val possibleChoices = clausesWithRelationInBody(electron.rs)
+    val possibleChoicesFromGNN = prioritizeClauses(clausesWithRelationInBody(electron.rs))
+    val possibleChoices = possibleChoicesFromGNN
+    //val possibleChoices = clausesWithRelationInBody(electron.rs)
 
     // for each possible choice, fix electron.rs, and resolve against
     // all previous derivations of other body literals
