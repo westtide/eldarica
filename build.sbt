@@ -30,10 +30,10 @@ lazy val parserGen = Seq(
 
           val cacheDir = outputDir / ".cache"
 
-          val parserDir = base / "src" / "lazabs" / "parser"
+          val parserDir = base / "src" / "main" / "scala" / "lazabs" / "parser"
           val parserOutputDir = outputDir / "normal"
 
-          val hornParserDir = base / "src" / "lazabs" / "horn" / "parser"
+          val hornParserDir = base / "src" / "main" / "scala" / "lazabs" / "horn" / "parser"
           val hornParserOutputDir = outputDir / "horn"
 
           // generated Java files

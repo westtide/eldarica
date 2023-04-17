@@ -58,8 +58,6 @@ class BreadthFirstForwardSymex[CC](clauses: Iterable[CC])(
   // from those states' queue the path that we are about to take.
 
   private val choicesQueue = new MQueue[(NormClause, Seq[UnitClause])]
-  //todo: sort this queue by the score of the clauses
-  //todo: only expect solve more unsafe benchmarks
 
   /*
    * Initialize the search by adding the facts (the initial states).
@@ -100,6 +98,8 @@ class BreadthFirstForwardSymex[CC](clauses: Iterable[CC])(
       for (choice <- Combinatorics.cartesianProduct(els.toList))
         choicesQueue enqueue ((nucleus, choice))
     }
+    //todo: sort choicesQueue by the score of the clauses
+    //todo: only expect solve more unsafe benchmarks
 
   }
 
