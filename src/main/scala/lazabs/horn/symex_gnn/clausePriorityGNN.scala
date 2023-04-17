@@ -16,6 +16,7 @@ object clausePriorityGNN {
   def prioritizeClauses(normClauses: Seq[NormClause], normClauseToScore: Map[NormClause, Double]): Seq[NormClause] = {
 
     val currentNormClauseToScore = for (nc <- normClauses) yield (nc, normClauseToScore(nc))
+    //val sortedCurrentNormClauseToScore = currentNormClauseToScore.sortBy(_._2)
     val sortedCurrentNormClauseToScore = currentNormClauseToScore.sortBy(_._2).reverse
 
     println(Console.BLUE + "normClauseToScore length:" + normClauseToScore.size)
@@ -28,11 +29,13 @@ object clausePriorityGNN {
 
 
   def readClauseScores[CC](clauses: Iterable[CC]): Map[CC, Double] = {
+    //get graph file name
     val graphFileName =
       if (GlobalParameters.get.fileName.contains("simplified")) GlobalParameters.get.fileName.stripSuffix(".simplified.smt2") + "." + graphFileNameMap(GlobalParameters.get.hornGraphType) + ".JSON"
       else GlobalParameters.get.fileName + "." + graphFileNameMap(GlobalParameters.get.hornGraphType) + ".JSON"
+    //read logit values from graph file
     val predictedLogitsFromGraph = readJsonFieldDouble(graphFileName, readLabelName = "predictedLabelLogit")
-    //todo: map CDHG predictedLogits to correct clause number
+    //for CDHG map predicted (read) Logits to correct clause number, for CG just return predictedLogitsFromGraph
     val predictedLogits = GlobalParameters.get.hornGraphType match {
       case HornGraphType.CDHG => {
         val labelMask = readJsonFieldInt(graphFileName, readLabelName = "labelMask")

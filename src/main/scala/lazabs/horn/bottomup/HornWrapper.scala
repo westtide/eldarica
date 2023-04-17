@@ -367,8 +367,13 @@ class HornWrapper(constraints  : Seq[HornClause],
   }
 
   def standardCheck() : ResultType = {
+    //read simplified smt2 file if it exists
     val (simplifiedClauses, allHints, preprocBackTranslator) =
-      preprocessClauses(unsimplifiedClauses, hints)
+      if (GlobalParameters.get.fileName .contains( ".simplified.smt2")) //if it is a simplifed.smt2 file, skip preprocessing
+        (unsimplifiedClauses, hints, HornPreprocessor.IDENTITY_TRANSLATOR)
+      else
+        preprocessClauses(unsimplifiedClauses, hints)
+
     val symexEngine = getSymex(simplifiedClauses)
     (new InnerHornWrapper(unsimplifiedClauses, simplifiedClauses,
                           allHints, preprocBackTranslator,

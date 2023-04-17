@@ -106,7 +106,7 @@ abstract class Symex[CC](iClauses:    Iterable[CC])(
   ).toSeq
 
   val normClauseToCC: Map[NormClause, CC] = normClauses.toMap
-  //todo: compute normClauseToScore
+  //get normClauseToScore map
   val clauseToScore: Map[CC, Double] = readClauseScores(iClauses)
   println(Console.BLUE+"iClauses length:"+iClauses.size)
   val normClauseToScore: Map[NormClause, Double] = (for ((normClause,_) <- normClauses) yield (normClause,clauseToScore(normClauseToCC(normClause)))).toMap
