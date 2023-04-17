@@ -13,16 +13,22 @@ object HornGraphType extends Enumeration {
 object clausePriorityGNN {
 
 
+  def prioritizeQueue(): Unit = {
+
+  }
   def prioritizeClauses(normClauses: Seq[NormClause], normClauseToScore: Map[NormClause, Double]): Seq[NormClause] = {
 
     val currentNormClauseToScore = for (nc <- normClauses) yield (nc, normClauseToScore(nc))
     //val sortedCurrentNormClauseToScore = currentNormClauseToScore.sortBy(_._2)
     val sortedCurrentNormClauseToScore = currentNormClauseToScore.sortBy(_._2).reverse
 
+    // print middle data for debug
     println(Console.BLUE + "normClauseToScore length:" + normClauseToScore.size)
     println(Console.BLUE + "currentNormClauseToScore length:" + currentNormClauseToScore.size)
     //for (c<-currentNormClauseToScore) println(Console.BLUE + c._1 + " " + c._2)
     //for (c<-sortedCurrentNormClauseToScore) println(Console.YELLOW + c._1 + " " + c._2)
+
+
     sortedCurrentNormClauseToScore.map(_._1)
     //normClauses
   }

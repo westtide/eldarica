@@ -58,6 +58,9 @@ class BreadthFirstForwardSymex[CC](clauses: Iterable[CC])(
   // from those states' queue the path that we are about to take.
 
   private val choicesQueue = new MQueue[(NormClause, Seq[UnitClause])]
+  //todo: sort this queue by the score of the clauses
+  //todo: only expect solve more unsafe benchmarks
+
   /*
    * Initialize the search by adding the facts (the initial states).
    * Each fact corresponds to a source in the search DAG.
