@@ -41,6 +41,7 @@ import lazabs.horn.bottomup.{HornClauses, NormClause, RelationSymbol}
 import lazabs.horn.bottomup.HornClauses.ConstraintClause
 import lazabs.horn.bottomup.Util.{Dag, DagEmpty, DagNode}
 import lazabs.horn.preprocessor.HornPreprocessor.Solution
+import lazabs.horn.symex_gnn.clausePriorityGNN.readClauseScores
 
 import collection.mutable.{HashSet => MHashSet, HashMap => MHashMap}
 
@@ -105,6 +106,11 @@ abstract class Symex[CC](iClauses:    Iterable[CC])(
   ).toSeq
 
   val normClauseToCC: Map[NormClause, CC] = normClauses.toMap
+  //todo: compute normClauseToScore
+  val clauseToScore: Map[CC, Double] = readClauseScores(iClauses)
+  println(Console.BLUE+"iClauses length:"+iClauses.size)
+  val normClauseToScore: Map[NormClause, Double] = (for ((normClause,_) <- normClauses) yield (normClause,clauseToScore(normClauseToCC(normClause)))).toMap
+
   //
   //private val originalLocalSymbols = new MHashSet[ConstantTerm]
   //private val rewrittenSymbols     = new UnionFind[ConstantTerm]

@@ -30,10 +30,11 @@
 
 package lazabs
 
-import java.io.{FileInputStream,InputStream,FileNotFoundException}
+import java.io.{FileInputStream, FileNotFoundException, InputStream}
 import parser._
 import lazabs.art._
 import lazabs.art.SearchMethod._
+import lazabs.horn.symex_gnn.HornGraphType
 import lazabs.prover._
 import lazabs.viewer._
 import lazabs.utils.Inline._
@@ -139,6 +140,7 @@ class GlobalParameters extends Cloneable {
   var verifyInterpolants = false
   var minePredicates = false
   var timeoutChecker : () => Unit = () => ()
+  var hornGraphType : HornGraphType.Value = HornGraphType.CDHG
 
   def needFullSolution = assertions || displaySolutionProlog || displaySolutionSMT
   def needFullCEX = assertions || plainCEX || !pngNo
@@ -227,6 +229,7 @@ class GlobalParameters extends Cloneable {
     that.assertions = this.assertions
     that.verifyInterpolants = this.verifyInterpolants
     that.timeoutChecker = this.timeoutChecker
+    that.hornGraphType = this.hornGraphType
   }
 
   override def clone : GlobalParameters = {
@@ -387,6 +390,14 @@ object Main {
       }
       case "-abstract:off" :: rest => {
         templateBasedInterpolation = false
+        arguments(rest)
+      }
+      case "-hornGraphType:CG" :: rest => {
+        hornGraphType = HornGraphType.CG
+        arguments(rest)
+      }
+      case "-hornGraphType:CDHG" :: rest => {
+        hornGraphType = HornGraphType.CDHG
         arguments(rest)
       }
       case tTimeout :: rest if (tTimeout.startsWith("-abstractTO:")) =>

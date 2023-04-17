@@ -27,6 +27,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 package lazabs.horn.symex
+import ap.util.Combinatorics
 
 import lazabs.horn.bottomup.HornClauses.ConstraintClause
 import lazabs.horn.bottomup.NormClause
@@ -75,7 +76,8 @@ class BreadthFirstForwardSymex[CC](clauses: Iterable[CC])(
   }
 
   override def handleNewUnitClause(electron: UnitClause): Unit = {
-    val possibleChoicesFromGNN = prioritizeClauses(clausesWithRelationInBody(electron.rs))
+
+    val possibleChoicesFromGNN = prioritizeClauses(clausesWithRelationInBody(electron.rs),normClauseToScore)
     val possibleChoices = possibleChoicesFromGNN
     //val possibleChoices = clausesWithRelationInBody(electron.rs)
 

@@ -149,6 +149,9 @@ lazy val root = (project in file(".")).
     libraryDependencies +=
       "org.scalatest" %% "scalatest" % "3.2.14" % "test",
 //
+    libraryDependencies +=
+      "com.typesafe.play" %% "play-json" % "2.4.6",
+//
 //    libraryDependencies += "io.github.uuverifiers" %% "princess" % "2022-03-16"
 //
     resolvers += ("uuverifiers" at "http://logicrunch.research.it.uu.se/maven/").withAllowInsecureProtocol(true),
