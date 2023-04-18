@@ -31,7 +31,7 @@ import ap.util.Combinatorics
 
 import lazabs.horn.bottomup.HornClauses.ConstraintClause
 import lazabs.horn.bottomup.NormClause
-import lazabs.horn.symex_gnn.clausePriorityGNN.{prioritizeClauses}
+import lazabs.horn.symex_gnn.clausePriorityGNN.{prioritizeClauses,prioritizeQueue}
 
 import scala.collection.mutable.{Queue => MQueue}
 
@@ -78,9 +78,9 @@ class BreadthFirstForwardSymex[CC](clauses: Iterable[CC])(
 
   override def handleNewUnitClause(electron: UnitClause): Unit = {
 
-    val possibleChoicesFromGNN = prioritizeClauses(clausesWithRelationInBody(electron.rs),normClauseToScore)
-    val possibleChoices = possibleChoicesFromGNN
-    //val possibleChoices = clausesWithRelationInBody(electron.rs)
+//    val possibleChoicesFromGNN = prioritizeClauses(clausesWithRelationInBody(electron.rs),normClauseToScore)
+//    val possibleChoices = possibleChoicesFromGNN
+    val possibleChoices = clausesWithRelationInBody(electron.rs)
 
     // for each possible choice, fix electron.rs, and resolve against
     // all previous derivations of other body literals
@@ -98,8 +98,7 @@ class BreadthFirstForwardSymex[CC](clauses: Iterable[CC])(
       for (choice <- Combinatorics.cartesianProduct(els.toList))
         choicesQueue enqueue ((nucleus, choice))
     }
-    //todo: sort choicesQueue by the score of the clauses
-    //todo: only expect solve more unsafe benchmarks
+    prioritizeQueue(choicesQueue,normClauseToScore)
 
   }
 

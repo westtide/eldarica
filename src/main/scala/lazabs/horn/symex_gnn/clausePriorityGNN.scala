@@ -2,7 +2,8 @@ package lazabs.horn.symex_gnn
 
 import lazabs.GlobalParameters
 import lazabs.horn.bottomup.NormClause
-
+import lazabs.horn.symex.UnitClause
+import scala.collection.mutable.{Queue => MQueue}
 import java.io.{File, PrintWriter}
 import play.api.libs.json.{JsSuccess, JsValue, Json}
 
@@ -13,7 +14,23 @@ object HornGraphType extends Enumeration {
 object clausePriorityGNN {
 
 
-  def prioritizeQueue(): Unit = {
+  def prioritizeQueue(choiceQueue: MQueue[(NormClause, Seq[UnitClause])],normClauseToScore: Map[NormClause, Double]): Unit= {
+    //extract elements from choiceQueue
+    for (e<-choiceQueue) println(Console.BLUE + e._1 + " " + e._2)
+    val queueSeq=(for (i <- 1 to choiceQueue.length) yield choiceQueue.dequeue()).toSeq
+
+    //sort elements by score
+    val queueSeqToScore = for (nc <- queueSeq) yield (nc, normClauseToScore(nc._1))
+    val sortedQueueSeqToScore= queueSeqToScore.sortBy(_._2).reverse
+    println(Console.RED + "queueSeq length:" + queueSeq.size)
+    for (e<-queueSeqToScore) println(Console.YELLOW + e._1 + " " + e._2)
+    for (e<-sortedQueueSeqToScore) println(Console.YELLOW_B + e._1 + " " + e._2)
+
+    //enqueue sorted elements to choiceQueue
+    for (s<-sortedQueueSeqToScore) choiceQueue.enqueue(s._1)
+    for (e<-choiceQueue) println(Console.RED + e._1 + " " + e._2)
+    sys.exit(0)
+
 
   }
   def prioritizeClauses(normClauses: Seq[NormClause], normClauseToScore: Map[NormClause, Double]): Seq[NormClause] = {
