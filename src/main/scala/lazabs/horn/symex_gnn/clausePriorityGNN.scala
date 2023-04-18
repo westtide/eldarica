@@ -35,7 +35,7 @@ object clausePriorityGNN {
     println(Console.BLUE + "queueSeqToScore length:" + queueSeqToScore.size)
     println(Console.BLUE + "sortedQueueSeqToScore length:" + sortedQueueSeqToScore.size)
     println(Console.BLUE + "choiceQueue length:" + choiceQueue.size)
-    sys.exit(0)
+    //sys.exit(0)
 
 
   }
