@@ -111,6 +111,7 @@ abstract class Symex[CC](iClauses:    Iterable[CC])(
   println(Console.BLUE+"iClauses length:"+iClauses.size)
   val normClauseToScore: Map[NormClause, Double] = (for ((normClause,_) <- normClauses) yield
     (normClause,clauseToScore(normClauseToCC(normClause)))).toMap
+  println(Console.BLUE+"normClauseToScore length:"+iClauses.size)
 
   //
   //private val originalLocalSymbols = new MHashSet[ConstantTerm]
