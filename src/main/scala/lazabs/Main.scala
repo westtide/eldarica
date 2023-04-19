@@ -141,6 +141,7 @@ class GlobalParameters extends Cloneable {
   var minePredicates = false
   var timeoutChecker : () => Unit = () => ()
   var hornGraphType : HornGraphType.Value = HornGraphType.CDHG
+  var useGNN = false
 
   def needFullSolution = assertions || displaySolutionProlog || displaySolutionSMT
   def needFullCEX = assertions || plainCEX || !pngNo
@@ -230,6 +231,7 @@ class GlobalParameters extends Cloneable {
     that.verifyInterpolants = this.verifyInterpolants
     that.timeoutChecker = this.timeoutChecker
     that.hornGraphType = this.hornGraphType
+    that.useGNN = this.useGNN
   }
 
   override def clone : GlobalParameters = {
@@ -393,10 +395,12 @@ object Main {
         arguments(rest)
       }
       case "-hornGraphType:CG" :: rest => {
+        useGNN = true
         hornGraphType = HornGraphType.CG
         arguments(rest)
       }
       case "-hornGraphType:CDHG" :: rest => {
+        useGNN = true
         hornGraphType = HornGraphType.CDHG
         arguments(rest)
       }

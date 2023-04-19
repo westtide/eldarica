@@ -28,10 +28,10 @@
  */
 package lazabs.horn.symex
 import ap.util.Combinatorics
-
+import lazabs.GlobalParameters
 import lazabs.horn.bottomup.HornClauses.ConstraintClause
 import lazabs.horn.bottomup.NormClause
-import lazabs.horn.symex_gnn.clausePriorityGNN.{prioritizeClauses,prioritizeQueue}
+import lazabs.horn.symex_gnn.clausePriorityGNN.{prioritizeClauses, prioritizeQueue}
 
 import scala.collection.mutable.{Queue => MQueue}
 
@@ -98,7 +98,8 @@ class BreadthFirstForwardSymex[CC](clauses: Iterable[CC])(
       for (choice <- Combinatorics.cartesianProduct(els.toList))
         choicesQueue enqueue ((nucleus, choice))
     }
-    prioritizeQueue(choicesQueue,normClauseToScore)
+    if (GlobalParameters.get.useGNN)
+      prioritizeQueue(choicesQueue,normClauseToScore)
 
   }
 
