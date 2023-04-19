@@ -37,13 +37,14 @@ import ap.terfor._
 import ap.terfor.conjunctions.Conjunction
 import ap.terfor.substitutions.ConstantSubst
 import ap.theories.{Theory, TheoryCollector}
+import lazabs.GlobalParameters
 import lazabs.horn.bottomup.{HornClauses, NormClause, RelationSymbol}
 import lazabs.horn.bottomup.HornClauses.ConstraintClause
 import lazabs.horn.bottomup.Util.{Dag, DagEmpty, DagNode}
 import lazabs.horn.preprocessor.HornPreprocessor.Solution
 import lazabs.horn.symex_gnn.clausePriorityGNN.readClauseScores
 
-import collection.mutable.{HashSet => MHashSet, HashMap => MHashMap}
+import collection.mutable.{HashMap => MHashMap, HashSet => MHashSet}
 
 object Symex {
   class SymexException(msg: String) extends Exception(msg)
@@ -108,10 +109,12 @@ abstract class Symex[CC](iClauses:    Iterable[CC])(
   val normClauseToCC: Map[NormClause, CC] = normClauses.toMap
   //get normClauseToScore map
   val clauseToScore: Map[CC, Double] = readClauseScores(iClauses)
-  println(Console.BLUE+"iClauses length:"+iClauses.size)
   val normClauseToScore: Map[NormClause, Double] = (for ((normClause,_) <- normClauses) yield
     (normClause,clauseToScore(normClauseToCC(normClause)))).toMap
-  println(Console.BLUE+"normClauseToScore length:"+iClauses.size)
+  if (GlobalParameters.get.log){
+    println(Console.BLUE + "iClauses length:" + iClauses.size)
+    println(Console.BLUE + "normClauseToScore length:" + iClauses.size)
+  }
 
   //
   //private val originalLocalSymbols = new MHashSet[ConstantTerm]

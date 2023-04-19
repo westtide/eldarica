@@ -12,33 +12,52 @@ object HornGraphType extends Enumeration {
 }
 
 object clausePriorityGNN {
+  val coefClauseScoreFromGNN = 1000
 
-
-  def prioritizeQueue(choiceQueue: MQueue[(NormClause, Seq[UnitClause])],normClauseToScore: Map[NormClause, Double]): Unit= {
+  def prioritizeQueue(choiceQueue: MQueue[(NormClause, Seq[UnitClause])], normClauseToScore: Map[NormClause, Double]): Unit = {
     //extract elements from choiceQueue
     //for (e<-choiceQueue) println(Console.BLUE + e._1 + " " + e._2)
-    val queueSeq=(for (i <- 1 to choiceQueue.length) yield choiceQueue.dequeue()).toSeq
+    val queueSeq = (for (i <- 1 to choiceQueue.length) yield choiceQueue.dequeue()).toSeq
 
     //sort elements by score
-    val queueSeqToScore = for (nc <- queueSeq) yield (nc, normClauseToScore(nc._1))
-    val sortedQueueSeqToScore= queueSeqToScore.sortBy(_._2).reverse
+    val queueSeqToScore = for (nc <- queueSeq) yield {
+      val normclauseSocre = normClauseToScore(nc._1)
+      val unitClauseSeqScore = nc._2.map(_.constraint.constants.size).sum //+ nc._2.map(_.rs.arity).sum
+      val queueElementScore=normClauseToScore(nc._1) * coefClauseScoreFromGNN +  unitClauseSeqScore
+
+      if (GlobalParameters.get.log) {
+        println(Console.YELLOW_B + " normClause constraint size:" + nc._1.constraint.size + " score:" + normclauseSocre)
+        println(Console.YELLOW + " Seq[UnitClause].length:" + nc._2.length)
+        println(Console.YELLOW + "Seq[UnitClause].head.constraint size:" + nc._2.head.constraint.size)
+        println(Console.YELLOW + "Seq[UnitClause].head.constraint predicate size:" + nc._2.head.constraint.predicates.size)
+        println(Console.YELLOW + "Seq[UnitClause].head.constraint variable size:" + nc._2.head.constraint.variables.size)
+        println(Console.YELLOW + "Seq[UnitClause].head.rs arity:" + nc._2.head.rs.arity)
+        //UnitClause.constraint.constants.size = UnitClause.constraint.size+1
+      }
+
+      (nc, queueElementScore)
+    }
+    val sortedQueueSeqToScore = queueSeqToScore.sortBy(_._2).reverse
 
     //for (e<-queueSeqToScore) println(Console.YELLOW + e._1 + " " + e._2)
     //for (e<-sortedQueueSeqToScore) println(Console.YELLOW_B + e._1 + " " + e._2)
 
     //enqueue sorted elements to choiceQueue
-    for (s<-sortedQueueSeqToScore) choiceQueue.enqueue(s._1)
+    for (s <- sortedQueueSeqToScore) choiceQueue.enqueue(s._1)
     //for (e<-choiceQueue) println(Console.RED + e._1 + " " + e._2)
 
-    println(Console.BLUE + "choiceQueue length:" + choiceQueue.size)
-    println(Console.BLUE + "queueSeq length:" + queueSeq.size)
-    println(Console.BLUE + "queueSeqToScore length:" + queueSeqToScore.size)
-    println(Console.BLUE + "sortedQueueSeqToScore length:" + sortedQueueSeqToScore.size)
-    println(Console.BLUE + "choiceQueue length:" + choiceQueue.size)
+    if (GlobalParameters.get.log) {
+      println(Console.BLUE + "queueSeq length:" + queueSeq.size)
+      println(Console.BLUE + "queueSeqToScore length:" + queueSeqToScore.size)
+      println(Console.BLUE + "sortedQueueSeqToScore length:" + sortedQueueSeqToScore.size)
+      println(Console.BLUE + "choiceQueue length:" + choiceQueue.size)
+    }
+
     //sys.exit(0)
 
 
   }
+
   def prioritizeClauses(normClauses: Seq[NormClause], normClauseToScore: Map[NormClause, Double]): Seq[NormClause] = {
 
     val currentNormClauseToScore = for (nc <- normClauses) yield (nc, normClauseToScore(nc))
@@ -60,8 +79,10 @@ object clausePriorityGNN {
   def readClauseScores[CC](clauses: Iterable[CC]): Map[CC, Double] = {
     //get graph file name
     val graphFileName =
-      if (GlobalParameters.get.fileName.contains("simplified")) GlobalParameters.get.fileName.stripSuffix(".simplified.smt2") + "." + graphFileNameMap(GlobalParameters.get.hornGraphType) + ".JSON"
-      else GlobalParameters.get.fileName + "." + graphFileNameMap(GlobalParameters.get.hornGraphType) + ".JSON"
+      if (GlobalParameters.get.fileName.contains("simplified"))
+        GlobalParameters.get.fileName.stripSuffix(".simplified.smt2") + "." + graphFileNameMap(GlobalParameters.get.hornGraphType) + ".JSON"
+      else
+        GlobalParameters.get.fileName + "." + graphFileNameMap(GlobalParameters.get.hornGraphType) + ".JSON"
     //read logit values from graph file
     val predictedLogitsFromGraph = readJsonFieldDouble(graphFileName, readLabelName = "predictedLabelLogit")
     //for CDHG map predicted (read) Logits to correct clause number, for CG just return predictedLogitsFromGraph
@@ -82,7 +103,7 @@ object clausePriorityGNN {
       }
     }
 
-    println(Console.BLUE + "predictedLogits length:" + predictedLogits.length)
+    //println(Console.BLUE + "predictedLogits length:" + predictedLogits.length)
     (for ((c, s) <- clauses.zip(predictedLogits)) yield (c, s)).toMap
   }
 
