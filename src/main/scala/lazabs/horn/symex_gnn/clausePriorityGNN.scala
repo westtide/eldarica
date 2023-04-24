@@ -37,7 +37,7 @@ object clausePriorityGNN {
 
       (nc, queueElementScore)
     }
-    val sortedQueueSeqToScore = queueSeqToScore.sortBy(_._2).reverse
+    val sortedQueueSeqToScore = queueSeqToScore.sortBy(_._2)//.reverse
 
     //for (e<-queueSeqToScore) println(Console.YELLOW + e._1 + " " + e._2)
     //for (e<-sortedQueueSeqToScore) println(Console.YELLOW_B + e._1 + " " + e._2)
