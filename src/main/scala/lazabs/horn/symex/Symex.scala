@@ -112,7 +112,7 @@ abstract class Symex[CC](iClauses:    Iterable[CC])(
     if(GlobalParameters.get.useGNN){
       val clauseToScore: Map[CC, Double] = readClauseScores(iClauses)
       val normClauseToScore: Map[NormClause, Double] = (for ((normClause, _) <- normClauses) yield
-        (normClause, clauseToScore(normClauseToCC(normClause)))).toMap
+        (normClause, clauseToScore(normClauseToCC(normClause)))).toMap //can reverse the score here
       if (GlobalParameters.get.log) {
         println(Console.BLUE + "iClauses length:" + iClauses.size)
         println(Console.BLUE + "normClauseToScore length:" + iClauses.size)

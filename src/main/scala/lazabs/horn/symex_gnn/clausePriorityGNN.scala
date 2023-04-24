@@ -1,14 +1,56 @@
 package lazabs.horn.symex_gnn
 
+import ap.terfor.conjunctions.Conjunction
 import lazabs.GlobalParameters
-import lazabs.horn.bottomup.NormClause
+import lazabs.horn.bottomup.{AbstractState, HornClauses, NormClause, RelationSymbol}
 import lazabs.horn.symex.UnitClause
-import scala.collection.mutable.{Queue => MQueue}
+
+import scala.collection.mutable.{PriorityQueue, Queue => MQueue}
 import java.io.{File, PrintWriter}
 import play.api.libs.json.{JsSuccess, JsValue, Json}
 
 object HornGraphType extends Enumeration {
   val CDHG, CG = Value
+}
+
+trait StateQueue {
+  type ChoiceQueueElement = (NormClause, Seq[UnitClause])
+  def isEmpty: Boolean
+  def size: Int
+  def enqueue(e:(NormClause,Seq[UnitClause])): Unit
+  def dequeue(): (NormClause,Seq[UnitClause])
+}
+
+class PriorityChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends StateQueue {
+  //type ChoiceQueueElement = (NormClause, Seq[UnitClause])
+  val coefClauseScoreFromGNN = 1000
+  println(Console.BLUE+"ChoiceQueue:PriorityChoiceQueue")
+  private def priority(s: ChoiceQueueElement) = {
+    val (nc, ucs) = s
+    val normclauseSocre = normClauseToScore(nc)
+    val unitClauseSeqScore = ucs.map(_.constraint.size).sum //+ nc._2.map(_.rs.arity).sum
+    val queueElementScore = normclauseSocre * coefClauseScoreFromGNN + unitClauseSeqScore
+    -queueElementScore.toInt
+  }
+  private implicit val ord = new Ordering[ChoiceQueueElement] {
+    def compare(s: ChoiceQueueElement, t: ChoiceQueueElement) =
+      priority(t) - priority(s)
+  }
+
+  private val states = new PriorityQueue[ChoiceQueueElement]
+  def isEmpty: Boolean =
+    states.isEmpty
+  def size: Int =
+    states.size
+  def enqueue(e:(NormClause,Seq[UnitClause])): Unit = {
+    //println(Console.BLUE+"enqueue",e._1,e._2)
+    states += ((e._1, e._2))
+  }
+
+  def dequeue(): (NormClause, Seq[UnitClause]) = {
+    val (nc, ucs) = states.dequeue
+    (nc, ucs)
+  }
 }
 
 object clausePriorityGNN {
@@ -22,8 +64,8 @@ object clausePriorityGNN {
     //sort elements by score
     val queueSeqToScore = for (nc <- queueSeq) yield {
       val normclauseSocre = normClauseToScore(nc._1)
-      val unitClauseSeqScore = nc._2.map(_.constraint.constants.size).sum //+ nc._2.map(_.rs.arity).sum
-      val queueElementScore=normClauseToScore(nc._1) * coefClauseScoreFromGNN +  unitClauseSeqScore
+      val unitClauseSeqScore = nc._2.map(_.constraint.size).sum //+ nc._2.map(_.rs.arity).sum
+      val queueElementScore = normclauseSocre * coefClauseScoreFromGNN + unitClauseSeqScore
 
       if (GlobalParameters.get.log) {
         println(Console.YELLOW_B + " normClause constraint size:" + nc._1.constraint.size + " score:" + normclauseSocre)
@@ -37,7 +79,7 @@ object clausePriorityGNN {
 
       (nc, queueElementScore)
     }
-    val sortedQueueSeqToScore = queueSeqToScore.sortBy(_._2)//.reverse
+    val sortedQueueSeqToScore = queueSeqToScore.sortBy(_._2).reverse
 
     //for (e<-queueSeqToScore) println(Console.YELLOW + e._1 + " " + e._2)
     //for (e<-sortedQueueSeqToScore) println(Console.YELLOW_B + e._1 + " " + e._2)

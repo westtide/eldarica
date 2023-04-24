@@ -31,6 +31,7 @@ import ap.util.Combinatorics
 import lazabs.GlobalParameters
 import lazabs.horn.bottomup.HornClauses.ConstraintClause
 import lazabs.horn.bottomup.NormClause
+import lazabs.horn.symex_gnn.PriorityChoiceQueue
 import lazabs.horn.symex_gnn.clausePriorityGNN.{prioritizeClauses, prioritizeQueue}
 
 import scala.collection.mutable.{Queue => MQueue}
@@ -57,7 +58,11 @@ class BreadthFirstForwardSymex[CC](clauses: Iterable[CC])(
   // than a single state, if other states we use are in the queue, we remove
   // from those states' queue the path that we are about to take.
 
-  private val choicesQueue = new MQueue[(NormClause, Seq[UnitClause])]
+  //private val choicesQueue = new MQueue[(NormClause, Seq[UnitClause])]
+
+  private val choicesQueue = new PriorityChoiceQueue(normClauseToScore)
+//    if (GlobalParameters.get.useGNN) new PriorityChoiceQueue(normClauseToScore)
+//    else new MQueue[(NormClause, Seq[UnitClause])]
 
   /*
    * Initialize the search by adding the facts (the initial states).
@@ -98,8 +103,8 @@ class BreadthFirstForwardSymex[CC](clauses: Iterable[CC])(
       for (choice <- Combinatorics.cartesianProduct(els.toList))
         choicesQueue enqueue ((nucleus, choice))
     }
-    if (GlobalParameters.get.useGNN)
-      prioritizeQueue(choicesQueue,normClauseToScore)
+//    if (GlobalParameters.get.useGNN)
+//      prioritizeQueue(choicesQueue,normClauseToScore)
 
   }
 
