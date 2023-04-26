@@ -24,7 +24,7 @@ trait StateQueue {
 class PriorityChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends StateQueue {
   //type ChoiceQueueElement = (NormClause, Seq[UnitClause])
   val coefClauseScoreFromGNN = 1000
-  println(Console.BLUE+"ChoiceQueue:PriorityChoiceQueue")
+  //println(Console.BLUE+"ChoiceQueue:PriorityChoiceQueue")
   private def priority(s: ChoiceQueueElement) = {
     val (nc, ucs) = s
     val normclauseSocre = normClauseToScore(nc)
