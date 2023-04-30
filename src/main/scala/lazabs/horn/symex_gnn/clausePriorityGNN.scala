@@ -23,13 +23,13 @@ trait StateQueue {
 
 class PriorityChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends StateQueue {
   //type ChoiceQueueElement = (NormClause, Seq[UnitClause])
-  val coefClauseScoreFromGNN = 100
+  val coefClauseScoreFromGNN = 1000
   //println(Console.BLUE+"ChoiceQueue:PriorityChoiceQueue")
   private def priority(s: ChoiceQueueElement) = {
     val (nc, ucs) = s
     val normclauseSocre = normClauseToScore(nc)
-    val unitClauseSeqScore = ucs.map(_.constraint.size).sum //+ nc._2.map(_.rs.arity).sum
-    val queueElementScore = normclauseSocre * coefClauseScoreFromGNN + unitClauseSeqScore
+    //val unitClauseSeqScore = ucs.map(_.constraint.size).sum //+ nc._2.map(_.rs.arity).sum
+    val queueElementScore = normclauseSocre * coefClauseScoreFromGNN // + unitClauseSeqScore
     -queueElementScore.toInt
   }
   private implicit val ord = new Ordering[ChoiceQueueElement] {
