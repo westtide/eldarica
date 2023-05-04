@@ -5,15 +5,15 @@
  * modification, are permitted provided that the following conditions are met:
  *
  * * Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
+ * list of conditions and the following disclaimer.
  *
  * * Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
  *
  * * Neither the name of the authors nor the names of their
- *   contributors may be used to endorse or promote products derived from
- *   this software without specific prior written permission.
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -27,11 +27,12 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 package lazabs.horn.symex
+
 import ap.util.Combinatorics
 import lazabs.GlobalParameters
 import lazabs.horn.bottomup.HornClauses.ConstraintClause
 import lazabs.horn.bottomup.NormClause
-import lazabs.horn.symex_gnn.PriorityChoiceQueue
+import lazabs.horn.symex_gnn.{OriginalPriorityChoiceQueue, PriorityChoiceQueue}
 import lazabs.horn.symex_gnn.clausePriorityGNN.{prioritizeClauses, prioritizeQueue}
 
 import scala.collection.mutable.{Queue => MQueue}
@@ -40,8 +41,8 @@ import scala.collection.mutable.{Queue => MQueue}
  * Implements a breadth-first forward symbolic execution using Symex.
  */
 class BreadthFirstForwardSymex[CC](clauses: Iterable[CC])(
-    implicit clause2ConstraintClause:       CC => ConstraintClause)
-    extends Symex(clauses)
+  implicit clause2ConstraintClause: CC => ConstraintClause)
+  extends Symex(clauses)
     with SimpleSubsumptionChecker
     with ConstraintSimplifierUsingConjunctEliminator {
 
@@ -60,21 +61,22 @@ class BreadthFirstForwardSymex[CC](clauses: Iterable[CC])(
 
   //private val choicesQueue = new MQueue[(NormClause, Seq[UnitClause])]
 
-  private val choicesQueue = new PriorityChoiceQueue(normClauseToScore)
-//    if (GlobalParameters.get.useGNN) new PriorityChoiceQueue(normClauseToScore)
-//    else new MQueue[(NormClause, Seq[UnitClause])]
+  //private val choicesQueue = new PriorityChoiceQueue(normClauseToScore)
+  private val choicesQueue =
+    if (GlobalParameters.get.useGNN) new PriorityChoiceQueue(normClauseToScore)
+    else new OriginalPriorityChoiceQueue()
 
   /*
    * Initialize the search by adding the facts (the initial states).
    * Each fact corresponds to a source in the search DAG.
    */
   for (fact <- facts) {
-    unitClauseDB add (fact, parents = (factToNormClause(fact), Nil))
+    unitClauseDB add(fact, parents = (factToNormClause(fact), Nil))
     handleNewUnitClause(fact)
   }
 
   final override def getClausesForResolution
-    : Option[(NormClause, Seq[UnitClause])] = {
+  : Option[(NormClause, Seq[UnitClause])] = {
     if (unitClauseDB.isEmpty || choicesQueue.isEmpty)
       None
     else
@@ -83,8 +85,8 @@ class BreadthFirstForwardSymex[CC](clauses: Iterable[CC])(
 
   override def handleNewUnitClause(electron: UnitClause): Unit = {
 
-//    val possibleChoicesFromGNN = prioritizeClauses(clausesWithRelationInBody(electron.rs),normClauseToScore)
-//    val possibleChoices = possibleChoicesFromGNN
+    //    val possibleChoicesFromGNN = prioritizeClauses(clausesWithRelationInBody(electron.rs),normClauseToScore)
+    //    val possibleChoices = possibleChoicesFromGNN
     val possibleChoices = clausesWithRelationInBody(electron.rs)
 
     // for each possible choice, fix electron.rs, and resolve against
@@ -103,19 +105,19 @@ class BreadthFirstForwardSymex[CC](clauses: Iterable[CC])(
       for (choice <- Combinatorics.cartesianProduct(els.toList))
         choicesQueue enqueue ((nucleus, choice))
     }
-//    if (GlobalParameters.get.useGNN)
-//      prioritizeQueue(choicesQueue,normClauseToScore)
+    //    if (GlobalParameters.get.useGNN)
+    //      prioritizeQueue(choicesQueue,normClauseToScore)
 
   }
 
-  override def handleForwardSubsumption(nucleus:   NormClause,
+  override def handleForwardSubsumption(nucleus: NormClause,
                                         electrons: Seq[UnitClause]): Unit = {}
 
   override def handleBackwardSubsumption(subsumed: Set[UnitClause]): Unit = {
     // todo: future work
   }
 
-  override def handleFalseConstraint(nucleus:   NormClause,
+  override def handleFalseConstraint(nucleus: NormClause,
                                      electrons: Seq[UnitClause]): Unit = {}
 
 }

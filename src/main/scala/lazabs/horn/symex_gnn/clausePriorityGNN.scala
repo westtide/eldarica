@@ -53,6 +53,32 @@ class PriorityChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends St
   }
 }
 
+class OriginalPriorityChoiceQueue() extends StateQueue {
+  private def priority(s: ChoiceQueueElement) = {
+    val (nc, ucs) = s
+    val unitClauseSeqScore = ucs.map(_.constraint.size).sum //+ nc._2.map(_.rs.arity).sum
+    val queueElementScore =  unitClauseSeqScore
+    -queueElementScore.toInt
+  }
+  private implicit val ord = new Ordering[ChoiceQueueElement] {
+    def compare(s: ChoiceQueueElement, t: ChoiceQueueElement) =
+      priority(t) - priority(s)
+  }
+  private val states = new PriorityQueue[ChoiceQueueElement]
+  def isEmpty: Boolean =
+    states.isEmpty
+  def size: Int =
+    states.size
+  def enqueue(e:(NormClause,Seq[UnitClause])): Unit = {
+    //println(Console.BLUE+"enqueue",e._1,e._2)
+    states += ((e._1, e._2))
+  }
+  def dequeue(): (NormClause, Seq[UnitClause]) = {
+    val (nc, ucs) = states.dequeue
+    (nc, ucs)
+  }
+}
+
 object clausePriorityGNN {
   val coefClauseScoreFromGNN = 1000
 
