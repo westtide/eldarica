@@ -56,7 +56,7 @@ class PriorityChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends St
 class OriginalPriorityChoiceQueue() extends StateQueue {
   private def priority(s: ChoiceQueueElement) = {
     val (nc, ucs) = s
-    val unitClauseSeqScore = ucs.map(_.constraint.size).sum //+ nc._2.map(_.rs.arity).sum
+    val unitClauseSeqScore = 1 //ucs.map(_.constraint.size).sum //+ nc._2.map(_.rs.arity).sum
     val queueElementScore =  unitClauseSeqScore
     -queueElementScore.toInt
   }

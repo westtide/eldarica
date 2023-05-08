@@ -59,12 +59,12 @@ class BreadthFirstForwardSymex[CC](clauses: Iterable[CC])(
   // than a single state, if other states we use are in the queue, we remove
   // from those states' queue the path that we are about to take.
 
-  private val choicesQueue = new MQueue[(NormClause, Seq[UnitClause])]
+  //private val choicesQueue = new MQueue[(NormClause, Seq[UnitClause])]
 
   //private val choicesQueue = new PriorityChoiceQueue(normClauseToScore)
-//  private val choicesQueue =
-//    if (GlobalParameters.get.useGNN) new PriorityChoiceQueue(normClauseToScore)
-//    else new OriginalPriorityChoiceQueue()
+  private val choicesQueue =
+    if (GlobalParameters.get.useGNN) new PriorityChoiceQueue(normClauseToScore)
+    else new OriginalPriorityChoiceQueue()
 
   /*
    * Initialize the search by adding the facts (the initial states).
