@@ -28,8 +28,8 @@ class PriorityChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends St
   private def priority(s: ChoiceQueueElement) = {
     val (nc, ucs) = s
     val normclauseSocre = normClauseToScore(nc)
-    //val unitClauseSeqScore = ucs.map(_.constraint.size).sum //+ nc._2.map(_.rs.arity).sum
-    val queueElementScore = normclauseSocre * coefClauseScoreFromGNN // + unitClauseSeqScore
+    val unitClauseSeqScore = ucs.map(_.constraint.size).sum //+ nc._2.map(_.rs.arity).sum
+    val queueElementScore = normclauseSocre * coefClauseScoreFromGNN + unitClauseSeqScore
     -queueElementScore.toInt
   }
   private implicit val ord = new Ordering[ChoiceQueueElement] {
