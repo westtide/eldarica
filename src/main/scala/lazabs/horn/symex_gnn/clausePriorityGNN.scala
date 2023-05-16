@@ -23,13 +23,15 @@ trait StateQueue {
 
 class PriorityChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends StateQueue {
   //type ChoiceQueueElement = (NormClause, Seq[UnitClause])
-  val coefClauseScoreFromGNN = 1000
+  val coefClauseScoreFromGNN = 1000000
   //println(Console.BLUE+"ChoiceQueue:PriorityChoiceQueue")
   private def priority(s: ChoiceQueueElement) = {
     val (nc, ucs) = s
     val normclauseSocre = normClauseToScore(nc)
-    val unitClauseSeqScore = ucs.map(_.constraint.size).sum //+ nc._2.map(_.rs.arity).sum
-    val queueElementScore = normclauseSocre * coefClauseScoreFromGNN + unitClauseSeqScore
+    //val unitClauseSeqScore = ucs.map(_.constraint.size).sum //+ nc._2.map(_.rs.arity).sum
+    val queueElementScore = normclauseSocre * coefClauseScoreFromGNN //+ unitClauseSeqScore
+    //println(Console.RED_B+"priority",normclauseSocre,unitClauseSeqScore,queueElementScore.toInt)
+
     -queueElementScore.toInt
   }
   private implicit val ord = new Ordering[ChoiceQueueElement] {
@@ -49,6 +51,10 @@ class PriorityChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends St
 
   def dequeue(): (NormClause, Seq[UnitClause]) = {
     val (nc, ucs) = states.dequeue
+//    val normclauseSocre = normClauseToScore(nc)
+//    val unitClauseSeqScore = ucs.map(_.constraint.size).sum //+ nc._2.map(_.rs.arity).sum
+//    val queueElementScore = normclauseSocre * coefClauseScoreFromGNN //+ unitClauseSeqScore
+//    println(Console.RED_B + "priority", normclauseSocre, unitClauseSeqScore, queueElementScore.toInt)
     (nc, ucs)
   }
 }
