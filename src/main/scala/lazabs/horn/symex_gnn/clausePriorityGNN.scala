@@ -14,141 +14,105 @@ object HornGraphType extends Enumeration {
 }
 
 trait StateQueue {
-  type ChoiceQueueElement = (NormClause, Seq[UnitClause])
+  type TimeType
+  type ChoiceQueueElement = (NormClause, Seq[UnitClause],TimeType)
+
   def isEmpty: Boolean
+
   def size: Int
-  def enqueue(e:(NormClause,Seq[UnitClause])): Unit
-  def dequeue(): (NormClause,Seq[UnitClause])
+
+  def enqueue(e: (NormClause, Seq[UnitClause])): Unit
+
+  def dequeue(): (NormClause, Seq[UnitClause])
+
+  def incTime: Unit = {}
 }
 
 class PriorityChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends StateQueue {
+  private var time = 0
+
   //type ChoiceQueueElement = (NormClause, Seq[UnitClause])
   val coefClauseScoreFromGNN = 1000000
+
   //println(Console.BLUE+"ChoiceQueue:PriorityChoiceQueue")
   private def priority(s: ChoiceQueueElement) = {
-    val (nc, ucs) = s
+    val (nc, ucs, birthTime) = s
     val normclauseSocre = normClauseToScore(nc)
     //val unitClauseSeqScore = ucs.map(_.constraint.size).sum //+ nc._2.map(_.rs.arity).sum
-    val queueElementScore = normclauseSocre * coefClauseScoreFromGNN //+ unitClauseSeqScore
+    val queueElementScore = normclauseSocre * coefClauseScoreFromGNN //+ unitClauseSeqScore + birth time
     //println(Console.RED_B+"priority",normclauseSocre,unitClauseSeqScore,queueElementScore.toInt)
 
     -queueElementScore.toInt
   }
+
   private implicit val ord = new Ordering[ChoiceQueueElement] {
     def compare(s: ChoiceQueueElement, t: ChoiceQueueElement) =
       priority(t) - priority(s)
   }
 
   private val states = new PriorityQueue[ChoiceQueueElement]
+
   def isEmpty: Boolean =
     states.isEmpty
+
   def size: Int =
     states.size
-  def enqueue(e:(NormClause,Seq[UnitClause])): Unit = {
+
+  def enqueue(e: (NormClause, Seq[UnitClause])): Unit = {
     //println(Console.BLUE+"enqueue",e._1,e._2)
-    states += ((e._1, e._2))
+    states += (e._1, e._2,time)
   }
 
   def dequeue(): (NormClause, Seq[UnitClause]) = {
-    val (nc, ucs) = states.dequeue
-//    val normclauseSocre = normClauseToScore(nc)
-//    val unitClauseSeqScore = ucs.map(_.constraint.size).sum //+ nc._2.map(_.rs.arity).sum
-//    val queueElementScore = normclauseSocre * coefClauseScoreFromGNN //+ unitClauseSeqScore
-//    println(Console.RED_B + "priority", normclauseSocre, unitClauseSeqScore, queueElementScore.toInt)
+    val (nc, ucs,birthTime) = states.dequeue
+    //    val normclauseSocre = normClauseToScore(nc)
+    //    val unitClauseSeqScore = ucs.map(_.constraint.size).sum //+ nc._2.map(_.rs.arity).sum
+    //    val queueElementScore = normclauseSocre * coefClauseScoreFromGNN //+ unitClauseSeqScore
+    //    println(Console.RED_B + "priority", normclauseSocre, unitClauseSeqScore, queueElementScore.toInt)
     (nc, ucs)
   }
+
+  override def incTime: Unit =
+    time = time + 1
 }
 
 class OriginalPriorityChoiceQueue() extends StateQueue {
+  private var time = 0
   private def priority(s: ChoiceQueueElement) = {
-    val (nc, ucs) = s
+    val (nc, ucs,_) = s
     //val unitClauseSeqScore = 1
     val unitClauseSeqScore = ucs.map(_.constraint.size).sum //+ nc._2.map(_.rs.arity).sum
-    val queueElementScore =  unitClauseSeqScore
+    val queueElementScore = unitClauseSeqScore
     -queueElementScore.toInt
   }
+
   private implicit val ord = new Ordering[ChoiceQueueElement] {
     def compare(s: ChoiceQueueElement, t: ChoiceQueueElement) =
       priority(t) - priority(s)
   }
   private val states = new PriorityQueue[ChoiceQueueElement]
+
   def isEmpty: Boolean =
     states.isEmpty
+
   def size: Int =
     states.size
-  def enqueue(e:(NormClause,Seq[UnitClause])): Unit = {
+
+  def enqueue(e: (NormClause, Seq[UnitClause])): Unit = {
     //println(Console.BLUE+"enqueue",e._1,e._2)
-    states += ((e._1, e._2))
+    states += (e._1, e._2,time)
   }
+
   def dequeue(): (NormClause, Seq[UnitClause]) = {
-    val (nc, ucs) = states.dequeue
+    val (nc, ucs,_) = states.dequeue
     (nc, ucs)
   }
+
+  override def incTime: Unit =
+    time = time + 1
 }
 
 object clausePriorityGNN {
-  val coefClauseScoreFromGNN = 1000
-
-  def prioritizeQueue(choiceQueue: MQueue[(NormClause, Seq[UnitClause])], normClauseToScore: Map[NormClause, Double]): Unit = {
-    //extract elements from choiceQueue
-    //for (e<-choiceQueue) println(Console.BLUE + e._1 + " " + e._2)
-    val queueSeq = (for (i <- 1 to choiceQueue.length) yield choiceQueue.dequeue()).toSeq
-
-    //sort elements by score
-    val queueSeqToScore = for (nc <- queueSeq) yield {
-      val normclauseSocre = normClauseToScore(nc._1)
-      val unitClauseSeqScore = nc._2.map(_.constraint.size).sum //+ nc._2.map(_.rs.arity).sum
-      val queueElementScore = normclauseSocre * coefClauseScoreFromGNN + unitClauseSeqScore
-
-      if (GlobalParameters.get.log) {
-        println(Console.YELLOW_B + " normClause constraint size:" + nc._1.constraint.size + " score:" + normclauseSocre)
-        println(Console.YELLOW + " Seq[UnitClause].length:" + nc._2.length)
-        println(Console.YELLOW + "Seq[UnitClause].head.constraint size:" + nc._2.head.constraint.size)
-        println(Console.YELLOW + "Seq[UnitClause].head.constraint predicate size:" + nc._2.head.constraint.predicates.size)
-        println(Console.YELLOW + "Seq[UnitClause].head.constraint variable size:" + nc._2.head.constraint.variables.size)
-        println(Console.YELLOW + "Seq[UnitClause].head.rs arity:" + nc._2.head.rs.arity)
-        //UnitClause.constraint.constants.size = UnitClause.constraint.size+1
-      }
-
-      (nc, queueElementScore)
-    }
-    val sortedQueueSeqToScore = queueSeqToScore.sortBy(_._2).reverse
-
-    //for (e<-queueSeqToScore) println(Console.YELLOW + e._1 + " " + e._2)
-    //for (e<-sortedQueueSeqToScore) println(Console.YELLOW_B + e._1 + " " + e._2)
-
-    //enqueue sorted elements to choiceQueue
-    for (s <- sortedQueueSeqToScore) choiceQueue.enqueue(s._1)
-    //for (e<-choiceQueue) println(Console.RED + e._1 + " " + e._2)
-
-    if (GlobalParameters.get.log) {
-      println(Console.BLUE + "queueSeq length:" + queueSeq.size)
-      println(Console.BLUE + "queueSeqToScore length:" + queueSeqToScore.size)
-      println(Console.BLUE + "sortedQueueSeqToScore length:" + sortedQueueSeqToScore.size)
-      println(Console.BLUE + "choiceQueue length:" + choiceQueue.size)
-    }
-
-    //sys.exit(0)
-
-
-  }
-
-  def prioritizeClauses(normClauses: Seq[NormClause], normClauseToScore: Map[NormClause, Double]): Seq[NormClause] = {
-
-    val currentNormClauseToScore = for (nc <- normClauses) yield (nc, normClauseToScore(nc))
-    //val sortedCurrentNormClauseToScore = currentNormClauseToScore.sortBy(_._2)
-    val sortedCurrentNormClauseToScore = currentNormClauseToScore.sortBy(_._2).reverse
-
-    // print middle data for debug
-    println(Console.BLUE + "normClauseToScore length:" + normClauseToScore.size)
-    println(Console.BLUE + "currentNormClauseToScore length:" + currentNormClauseToScore.size)
-    //for (c<-currentNormClauseToScore) println(Console.BLUE + c._1 + " " + c._2)
-    //for (c<-sortedCurrentNormClauseToScore) println(Console.YELLOW + c._1 + " " + c._2)
-
-
-    sortedCurrentNormClauseToScore.map(_._1)
-    //normClauses
-  }
 
 
   def readClauseScores[CC](clauses: Iterable[CC]): Map[CC, Double] = {

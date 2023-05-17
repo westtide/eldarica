@@ -84,9 +84,7 @@ class BreadthFirstForwardSymex[CC](clauses: Iterable[CC])(
   }
 
   override def handleNewUnitClause(electron: UnitClause): Unit = {
-
-    //    val possibleChoicesFromGNN = prioritizeClauses(clausesWithRelationInBody(electron.rs),normClauseToScore)
-    //    val possibleChoices = possibleChoicesFromGNN
+    
     val possibleChoices = clausesWithRelationInBody(electron.rs)
 
     // for each possible choice, fix electron.rs, and resolve against
@@ -105,9 +103,6 @@ class BreadthFirstForwardSymex[CC](clauses: Iterable[CC])(
       for (choice <- Combinatorics.cartesianProduct(els.toList))
         choicesQueue enqueue ((nucleus, choice))
     }
-    //    if (GlobalParameters.get.useGNN)
-    //      prioritizeQueue(choicesQueue,normClauseToScore)
-
   }
 
   override def handleForwardSubsumption(nucleus: NormClause,
