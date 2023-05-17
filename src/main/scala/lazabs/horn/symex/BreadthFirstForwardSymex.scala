@@ -32,8 +32,8 @@ import ap.util.Combinatorics
 import lazabs.GlobalParameters
 import lazabs.horn.bottomup.HornClauses.ConstraintClause
 import lazabs.horn.bottomup.NormClause
+
 import lazabs.horn.symex_gnn.{OriginalPriorityChoiceQueue, PriorityChoiceQueue}
-import lazabs.horn.symex_gnn.clausePriorityGNN.{prioritizeClauses, prioritizeQueue}
 
 import scala.collection.mutable.{Queue => MQueue}
 
@@ -84,7 +84,8 @@ class BreadthFirstForwardSymex[CC](clauses: Iterable[CC])(
   }
 
   override def handleNewUnitClause(electron: UnitClause): Unit = {
-    
+    choicesQueue.incTime //todo: check where to use incTime
+
     val possibleChoices = clausesWithRelationInBody(electron.rs)
 
     // for each possible choice, fix electron.rs, and resolve against

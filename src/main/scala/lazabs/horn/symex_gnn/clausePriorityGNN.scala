@@ -15,7 +15,7 @@ object HornGraphType extends Enumeration {
 
 trait StateQueue {
   type TimeType
-  type ChoiceQueueElement = (NormClause, Seq[UnitClause],TimeType)
+  type ChoiceQueueElement = (NormClause, Seq[UnitClause], TimeType)
 
   def isEmpty: Boolean
 
@@ -29,6 +29,7 @@ trait StateQueue {
 }
 
 class PriorityChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends StateQueue {
+  type TimeType = Int
   private var time = 0
 
   //type ChoiceQueueElement = (NormClause, Seq[UnitClause])
@@ -60,7 +61,7 @@ class PriorityChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends St
 
   def enqueue(e: (NormClause, Seq[UnitClause])): Unit = {
     //println(Console.BLUE+"enqueue",e._1,e._2)
-    states += (e._1, e._2,time)
+    states += ((e._1, e._2, time))
   }
 
   def dequeue(): (NormClause, Seq[UnitClause]) = {
@@ -71,12 +72,12 @@ class PriorityChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends St
     //    println(Console.RED_B + "priority", normclauseSocre, unitClauseSeqScore, queueElementScore.toInt)
     (nc, ucs)
   }
-
   override def incTime: Unit =
     time = time + 1
 }
 
 class OriginalPriorityChoiceQueue() extends StateQueue {
+  type TimeType = Int
   private var time = 0
   private def priority(s: ChoiceQueueElement) = {
     val (nc, ucs,_) = s
@@ -100,7 +101,7 @@ class OriginalPriorityChoiceQueue() extends StateQueue {
 
   def enqueue(e: (NormClause, Seq[UnitClause])): Unit = {
     //println(Console.BLUE+"enqueue",e._1,e._2)
-    states += (e._1, e._2,time)
+    states += ((e._1, e._2,time))
   }
 
   def dequeue(): (NormClause, Seq[UnitClause]) = {
@@ -124,13 +125,16 @@ object clausePriorityGNN {
         GlobalParameters.get.fileName + "." + graphFileNameMap(GlobalParameters.get.hornGraphType) + ".JSON"
     //read logit values from graph file
     val predictedLogitsFromGraph = readJsonFieldDouble(graphFileName, readLabelName = "predictedLabelLogit")
-    //for CDHG map predicted (read) Logits to correct clause number, for CG just return predictedLogitsFromGraph
+    //normalize scores
+    val normalizedLogits = predictedLogitsFromGraph.map(x => (x - predictedLogitsFromGraph.min) / (predictedLogitsFromGraph.max - predictedLogitsFromGraph.min))
+
+    //for CDHG map predicted (read) Logits to correct clause number, for CG just return normalizedLogits
     val predictedLogits = GlobalParameters.get.hornGraphType match {
       case HornGraphType.CDHG => {
         val labelMask = readJsonFieldInt(graphFileName, readLabelName = "labelMask")
         val originalClausesIndex = labelMask.distinct
         val separatedPredictedLabels = for (i <- originalClausesIndex) yield {
-          for (ii <- (0 until labelMask.count(_ == i))) yield predictedLogitsFromGraph(i + ii)
+          for (ii <- (0 until labelMask.count(_ == i))) yield normalizedLogits(i + ii)
         }
         val logitsForOriginalClauses = for (sl <- separatedPredictedLabels) yield {
           sl.max
@@ -138,7 +142,7 @@ object clausePriorityGNN {
         logitsForOriginalClauses
       }
       case HornGraphType.CG => {
-        predictedLogitsFromGraph
+        normalizedLogits
       }
     }
 
