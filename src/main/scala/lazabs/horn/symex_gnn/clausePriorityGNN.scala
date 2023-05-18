@@ -33,14 +33,17 @@ class PriorityChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends St
   private var time = 0
 
   //type ChoiceQueueElement = (NormClause, Seq[UnitClause])
-  val coefClauseScoreFromGNN = 1000000
+  val coefClauseScoreFromGNN = 100
 
   //println(Console.BLUE+"ChoiceQueue:PriorityChoiceQueue")
   private def priority(s: ChoiceQueueElement) = {
     val (nc, ucs, birthTime) = s
     val normclauseSocre = normClauseToScore(nc)
     //val unitClauseSeqScore = ucs.map(_.constraint.size).sum //+ nc._2.map(_.rs.arity).sum
-    val queueElementScore = normclauseSocre * coefClauseScoreFromGNN //+ unitClauseSeqScore + birth time
+    //val queueElementScore = normclauseSocre * coefClauseScoreFromGNN
+    //val queueElementScore = normclauseSocre * coefClauseScoreFromGNN + unitClauseSeqScore
+    //val queueElementScore =  birthTime
+    val queueElementScore = normclauseSocre * coefClauseScoreFromGNN + birthTime
     //println(Console.RED_B+"priority",normclauseSocre,unitClauseSeqScore,queueElementScore.toInt)
 
     -queueElementScore.toInt
