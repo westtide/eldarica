@@ -40,10 +40,11 @@ class PriorityChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends St
     val (nc, ucs, birthTime) = s
     val normclauseSocre = normClauseToScore(nc)
     //val unitClauseSeqScore = ucs.map(_.constraint.size).sum //+ nc._2.map(_.rs.arity).sum
-    //val queueElementScore = normclauseSocre * coefClauseScoreFromGNN
+    val queueElementScore = normclauseSocre * coefClauseScoreFromGNN
     //val queueElementScore = normclauseSocre * coefClauseScoreFromGNN + unitClauseSeqScore
     //val queueElementScore =  birthTime
-    val queueElementScore = normclauseSocre * coefClauseScoreFromGNN + birthTime
+    //val queueElementScore = normclauseSocre * coefClauseScoreFromGNN + birthTime
+    //val queueElementScore = normclauseSocre * coefClauseScoreFromGNN + unitClauseSeqScore + birthTime
     //println(Console.RED_B+"priority",normclauseSocre,unitClauseSeqScore,queueElementScore.toInt)
 
     -queueElementScore.toInt
@@ -130,6 +131,7 @@ object clausePriorityGNN {
     val predictedLogitsFromGraph = readJsonFieldDouble(graphFileName, readLabelName = "predictedLabelLogit")
     //normalize scores
     val normalizedLogits = predictedLogitsFromGraph.map(x => (x - predictedLogitsFromGraph.min) / (predictedLogitsFromGraph.max - predictedLogitsFromGraph.min))
+    //todo: rank clauses by scores
 
     //for CDHG map predicted (read) Logits to correct clause number, for CG just return normalizedLogits
     val predictedLogits = GlobalParameters.get.hornGraphType match {
