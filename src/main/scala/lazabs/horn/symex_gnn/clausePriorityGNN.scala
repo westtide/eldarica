@@ -40,7 +40,8 @@ class PriorityChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends St
     val (nc, ucs, birthTime) = s
     val normclauseSocre = normClauseToScore(nc)
     //val unitClauseSeqScore = ucs.map(_.constraint.size).sum //+ nc._2.map(_.rs.arity).sum
-    val queueElementScore = normclauseSocre //by rank
+    //val queueElementScore = normclauseSocre //by rank
+    val queueElementScore = normclauseSocre + birthTime //rank + birthTime
     //val queueElementScore = normclauseSocre * coefClauseScoreFromGNN
     //val queueElementScore = normclauseSocre * coefClauseScoreFromGNN + unitClauseSeqScore
     //val queueElementScore =  birthTime
