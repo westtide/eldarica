@@ -128,7 +128,7 @@ object clausePriorityGNN {
     val predictedLogitsFromGraph = readJsonFieldDouble(graphFileName, readLabelName = "predictedLabelLogit")
     //normalize scores
     val normalizedLogits = predictedLogitsFromGraph.map(x => (x - predictedLogitsFromGraph.min) / (predictedLogitsFromGraph.max - predictedLogitsFromGraph.min))
-    val ranks= rankFloatList(normalizedLogits)
+    val (ranks,stableRanks)= rankFloatList(normalizedLogits)
 
     //for CDHG map predicted (read) Logits to correct clause number, for CG just return normalizedLogits
     val predictedLogits = GlobalParameters.get.hornGraphType match {
@@ -178,13 +178,14 @@ object clausePriorityGNN {
     Json.parse(json_content)
   }
 
-  def rankFloatList(values: Array[Double]): Array[Double] = {
+  def rankFloatList(values: Array[Double]): (Array[Double], Array[Double]) = {
     val valuesWithIndex = for ((v, i) <- values.zipWithIndex) yield (i, v)
     val rankTuple = (for (((i, v), r) <- valuesWithIndex.sortBy(_._2).reverse.zipWithIndex) yield (i, v, r)).sortBy(_._1)
-    val ranks = rankTuple.map(_._3 + 1)
-    //rankTuple.foreach(println)
-    //ranks.foreach(println)
-    ranks
+    val ranks = rankTuple.map(_._3 + 1.toDouble)
+
+    val stableRankMap = values.toSet.toList.sorted.reverse.zipWithIndex.toMap
+    val StableRanks = for (v <- values) yield stableRankMap(v).toDouble
+    (ranks, StableRanks)
   }
 
 
