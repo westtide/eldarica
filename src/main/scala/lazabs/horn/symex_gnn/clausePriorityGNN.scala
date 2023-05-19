@@ -71,10 +71,6 @@ class PriorityChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends St
 
   def dequeue(): (NormClause, Seq[UnitClause]) = {
     val (nc, ucs,birthTime) = states.dequeue
-    //    val normclauseSocre = normClauseToScore(nc)
-    //    val unitClauseSeqScore = ucs.map(_.constraint.size).sum //+ nc._2.map(_.rs.arity).sum
-    //    val queueElementScore = normclauseSocre * coefClauseScoreFromGNN //+ unitClauseSeqScore
-    //    println(Console.RED_B + "priority", normclauseSocre, unitClauseSeqScore, queueElementScore.toInt)
     (nc, ucs)
   }
   override def incTime: Unit =
@@ -182,7 +178,7 @@ object clausePriorityGNN {
     Json.parse(json_content)
   }
 
-  def rankFloatList(values: Array[Double]): Array[Int] = {
+  def rankFloatList(values: Array[Double]): Array[Double] = {
     val valuesWithIndex = for ((v, i) <- values.zipWithIndex) yield (i, v)
     val rankTuple = (for (((i, v), r) <- valuesWithIndex.sortBy(_._2).reverse.zipWithIndex) yield (i, v, r)).sortBy(_._1)
     val ranks = rankTuple.map(_._3 + 1)
