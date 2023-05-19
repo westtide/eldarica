@@ -136,7 +136,7 @@ object clausePriorityGNN {
         val labelMask = readJsonFieldInt(graphFileName, readLabelName = "labelMask")
         val originalClausesIndex = labelMask.distinct
         val separatedPredictedLabels = for (i <- originalClausesIndex) yield {
-          for (ii <- (0 until labelMask.count(_ == i))) yield ranks(i + ii)
+          for (ii <- (0 until labelMask.count(_ == i))) yield stableRanks(i + ii)
         }
         val logitsForOriginalClauses = for (sl <- separatedPredictedLabels) yield {
           sl.max
@@ -144,7 +144,7 @@ object clausePriorityGNN {
         logitsForOriginalClauses
       }
       case HornGraphType.CG => {
-        ranks
+        stableRanks
       }
     }
 
