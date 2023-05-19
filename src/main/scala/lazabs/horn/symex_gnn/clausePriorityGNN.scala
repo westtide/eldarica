@@ -40,7 +40,8 @@ class PriorityChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends St
     val (nc, ucs, birthTime) = s
     val normclauseSocre = normClauseToScore(nc)
     //val unitClauseSeqScore = ucs.map(_.constraint.size).sum //+ nc._2.map(_.rs.arity).sum
-    val queueElementScore = normclauseSocre * coefClauseScoreFromGNN
+    val queueElementScore = normclauseSocre //by rank
+    //val queueElementScore = normclauseSocre * coefClauseScoreFromGNN
     //val queueElementScore = normclauseSocre * coefClauseScoreFromGNN + unitClauseSeqScore
     //val queueElementScore =  birthTime
     //val queueElementScore = normclauseSocre * coefClauseScoreFromGNN + birthTime
@@ -131,7 +132,7 @@ object clausePriorityGNN {
     val predictedLogitsFromGraph = readJsonFieldDouble(graphFileName, readLabelName = "predictedLabelLogit")
     //normalize scores
     val normalizedLogits = predictedLogitsFromGraph.map(x => (x - predictedLogitsFromGraph.min) / (predictedLogitsFromGraph.max - predictedLogitsFromGraph.min))
-    //todo: rank clauses by scores
+    val ranks= rankFloatList(normalizedLogits)
 
     //for CDHG map predicted (read) Logits to correct clause number, for CG just return normalizedLogits
     val predictedLogits = GlobalParameters.get.hornGraphType match {
@@ -139,7 +140,7 @@ object clausePriorityGNN {
         val labelMask = readJsonFieldInt(graphFileName, readLabelName = "labelMask")
         val originalClausesIndex = labelMask.distinct
         val separatedPredictedLabels = for (i <- originalClausesIndex) yield {
-          for (ii <- (0 until labelMask.count(_ == i))) yield normalizedLogits(i + ii)
+          for (ii <- (0 until labelMask.count(_ == i))) yield ranks(i + ii)
         }
         val logitsForOriginalClauses = for (sl <- separatedPredictedLabels) yield {
           sl.max
@@ -147,7 +148,7 @@ object clausePriorityGNN {
         logitsForOriginalClauses
       }
       case HornGraphType.CG => {
-        normalizedLogits
+        ranks
       }
     }
 
@@ -179,6 +180,15 @@ object clausePriorityGNN {
   def readJSONFile(fileName: String): JsValue = {
     val json_content = scala.io.Source.fromFile(fileName).mkString
     Json.parse(json_content)
+  }
+
+  def rankFloatList(values: Array[Double]): Array[Int] = {
+    val valuesWithIndex = for ((v, i) <- values.zipWithIndex) yield (i, v)
+    val rankTuple = (for (((i, v), r) <- valuesWithIndex.sortBy(_._2).reverse.zipWithIndex) yield (i, v, r)).sortBy(_._1)
+    val ranks = rankTuple.map(_._3 + 1)
+    //rankTuple.foreach(println)
+    //ranks.foreach(println)
+    ranks
   }
 
 
