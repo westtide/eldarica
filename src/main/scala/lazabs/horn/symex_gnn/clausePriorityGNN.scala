@@ -85,8 +85,8 @@ class OriginalPriorityChoiceQueue() extends StateQueue {
   private var time = 0
   private def priority(s: ChoiceQueueElement) = {
     val (nc, ucs,_) = s
-    //val unitClauseSeqScore = 1
-    val unitClauseSeqScore = ucs.map(_.constraint.size).sum //+ nc._2.map(_.rs.arity).sum
+    val unitClauseSeqScore = 1
+    //val unitClauseSeqScore = ucs.map(_.constraint.size).sum //+ nc._2.map(_.rs.arity).sum
     val queueElementScore = unitClauseSeqScore
     -queueElementScore.toInt
   }
