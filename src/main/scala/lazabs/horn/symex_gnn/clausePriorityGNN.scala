@@ -41,15 +41,15 @@ class PriorityChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends St
     val normclauseSocre = normClauseToScore(nc)
     val unitClauseSeqScore = ucs.map(_.constraint.size).sum //+ nc._2.map(_.rs.arity).sum
     //by rank
-    //val queueElementScore = normclauseSocre
+    //val queueElementScore = normclauseSocre //rank
     //val queueElementScore = normclauseSocre + birthTime //rank + birthTime
-    val queueElementScore = normclauseSocre + birthTime + unitClauseSeqScore //rank + birthTime + unitClauseSeqScore
+    //val queueElementScore = normclauseSocre + birthTime + unitClauseSeqScore //rank + birthTime + unitClauseSeqScore
     //by score
     //val queueElementScore = normclauseSocre * coefClauseScoreFromGNN
     //val queueElementScore = normclauseSocre * coefClauseScoreFromGNN + unitClauseSeqScore
     //val queueElementScore =  birthTime
     //val queueElementScore = normclauseSocre * coefClauseScoreFromGNN + birthTime
-    //val queueElementScore = normclauseSocre * coefClauseScoreFromGNN + unitClauseSeqScore + birthTime
+    val queueElementScore = normclauseSocre * coefClauseScoreFromGNN + unitClauseSeqScore + birthTime
     //println(Console.RED_B+"priority",normclauseSocre,unitClauseSeqScore,queueElementScore.toInt)
 
     -queueElementScore.toInt
@@ -133,6 +133,7 @@ object clausePriorityGNN {
     //normalize scores
     val normalizedLogits = predictedLogitsFromGraph.map(x => (x - predictedLogitsFromGraph.min) / (predictedLogitsFromGraph.max - predictedLogitsFromGraph.min))
     val (ranks,stableRanks)= rankFloatList(normalizedLogits)
+    val scores=normalizedLogits
 
     //for CDHG map predicted (read) Logits to correct clause number, for CG just return normalizedLogits
     val predictedLogits = GlobalParameters.get.hornGraphType match {
@@ -140,7 +141,7 @@ object clausePriorityGNN {
         val labelMask = readJsonFieldInt(graphFileName, readLabelName = "labelMask")
         val originalClausesIndex = labelMask.distinct
         val separatedPredictedLabels = for (i <- originalClausesIndex) yield {
-          for (ii <- (0 until labelMask.count(_ == i))) yield stableRanks(i + ii)
+          for (ii <- (0 until labelMask.count(_ == i))) yield scores(i + ii)
         }
         val logitsForOriginalClauses = for (sl <- separatedPredictedLabels) yield {
           sl.max
@@ -148,7 +149,7 @@ object clausePriorityGNN {
         logitsForOriginalClauses
       }
       case HornGraphType.CG => {
-        stableRanks
+        scores
       }
     }
 
