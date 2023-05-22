@@ -47,9 +47,9 @@ class PriorityChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends St
     //by score
     //val queueElementScore = normclauseSocre * coefClauseScoreFromGNN
     //val queueElementScore = normclauseSocre * coefClauseScoreFromGNN + unitClauseSeqScore
-    //val queueElementScore =  birthTime
+    val queueElementScore =  birthTime
     //val queueElementScore = normclauseSocre * coefClauseScoreFromGNN + birthTime
-    val queueElementScore = normclauseSocre * coefClauseScoreFromGNN + unitClauseSeqScore + birthTime
+    //val queueElementScore = normclauseSocre * coefClauseScoreFromGNN + unitClauseSeqScore + birthTime
     //println(Console.RED_B+"priority",normclauseSocre,unitClauseSeqScore,queueElementScore.toInt)
 
     -queueElementScore.toInt
@@ -75,6 +75,7 @@ class PriorityChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends St
 
   def dequeue(): (NormClause, Seq[UnitClause]) = {
     val (nc, ucs,birthTime) = states.dequeue
+    //println(Console.BLUE + "dequeue", "birthTime", birthTime)
     (nc, ucs)
   }
   override def incTime: Unit =

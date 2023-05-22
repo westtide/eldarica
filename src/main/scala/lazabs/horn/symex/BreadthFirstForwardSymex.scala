@@ -84,13 +84,14 @@ class BreadthFirstForwardSymex[CC](clauses: Iterable[CC])(
   }
 
   override def handleNewUnitClause(electron: UnitClause): Unit = {
-    choicesQueue.incTime //todo: check where to use incTime
+    //choicesQueue.incTime //todo: check where to use incTime
 
     val possibleChoices = clausesWithRelationInBody(electron.rs)
 
     // for each possible choice, fix electron.rs, and resolve against
     // all previous derivations of other body literals
     for (nucleus <- possibleChoices) {
+      choicesQueue.incTime //todo: check where to use incTime
       // first find out if there are multiple occurrences of electron.rs
       val hasMultipleOccurrences = nucleus.body.count(_._1 == electron.rs) > 1
 
