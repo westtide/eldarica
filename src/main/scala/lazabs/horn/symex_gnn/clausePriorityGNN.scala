@@ -8,7 +8,7 @@ import lazabs.horn.symex.UnitClause
 import scala.collection.mutable.{PriorityQueue, Queue => MQueue}
 import java.io.{File, PrintWriter}
 import play.api.libs.json.{JsSuccess, JsValue, Json}
-
+import scala.util.Random
 object HornGraphType extends Enumeration {
   val CDHG, CG = Value
 }
@@ -40,15 +40,19 @@ class PriorityChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends St
     val (nc, ucs, birthTime) = s
     val normclauseSocre = normClauseToScore(nc)
     val unitClauseSeqScore = ucs.map(_.constraint.size).sum //+ nc._2.map(_.rs.arity).sum
-    //by rank
+    //by fixed values
+    //val queueElementScore =  birthTime
+    //val queueElementScore =  normclauseSocre
+
+    //by rank, need to shift val scores=
     //val queueElementScore = normclauseSocre //rank
     //val queueElementScore = normclauseSocre + birthTime //rank + birthTime
+    //val queueElementScore = normclauseSocre + unitClauseSeqScore //rank + unitClauseSeqScore
     //val queueElementScore = normclauseSocre + birthTime + unitClauseSeqScore //rank + birthTime + unitClauseSeqScore
-    //by score
+    //by score, need to shift val scores=
     //val queueElementScore = normclauseSocre * coefClauseScoreFromGNN
     //val queueElementScore = normclauseSocre * coefClauseScoreFromGNN + unitClauseSeqScore
-    val queueElementScore =  birthTime
-    //val queueElementScore = normclauseSocre * coefClauseScoreFromGNN + birthTime
+    val queueElementScore = normclauseSocre * coefClauseScoreFromGNN + birthTime
     //val queueElementScore = normclauseSocre * coefClauseScoreFromGNN + unitClauseSeqScore + birthTime
     //println(Console.RED_B+"priority",normclauseSocre,unitClauseSeqScore,queueElementScore.toInt)
 
@@ -86,16 +90,24 @@ class OriginalPriorityChoiceQueue() extends StateQueue {
   type TimeType = Int
   private var time = 0
   private def priority(s: ChoiceQueueElement) = {
-    val (nc, ucs,_) = s
-    val unitClauseSeqScore = 1
+    val (nc, ucs,birthTime) = s
     //val unitClauseSeqScore = ucs.map(_.constraint.size).sum //+ nc._2.map(_.rs.arity).sum
-    val queueElementScore = unitClauseSeqScore
+    //val queueElementScore = unitClauseSeqScore /constraint sum
+    //val queueElementScore = 1 //constant
+    val queueElementScore = birthTime //birth time
     -queueElementScore.toInt
   }
 
   private implicit val ord = new Ordering[ChoiceQueueElement] {
-    def compare(s: ChoiceQueueElement, t: ChoiceQueueElement) =
+    def compare(s: ChoiceQueueElement, t: ChoiceQueueElement) = {
       priority(t) - priority(s)
+//      if(Random.nextDouble()>0.5){
+//        1
+//      }else{
+//        0
+//      }
+
+    }
   }
   private val states = new PriorityQueue[ChoiceQueueElement]
 
