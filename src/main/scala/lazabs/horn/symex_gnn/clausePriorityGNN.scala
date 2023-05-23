@@ -43,8 +43,8 @@ class PriorityChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends St
 
 
     //by rank, need to shift val scores=
-    //val queueElementScore = normclauseSocre //rank
-    val queueElementScore = normclauseSocre + birthTime //rank + birthTime
+    val queueElementScore = normclauseSocre //rank //alvis running
+    //val queueElementScore = normclauseSocre + birthTime //rank + birthTime //uppmax running
     //val queueElementScore = normclauseSocre + unitClauseSeqScore //rank + unitClauseSeqScore
     //val queueElementScore = normclauseSocre + birthTime + unitClauseSeqScore //rank + birthTime + unitClauseSeqScore
     //by score, need to shift val scores=
@@ -54,7 +54,7 @@ class PriorityChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends St
     //val queueElementScore = normclauseSocre * coefClauseScoreFromGNN + unitClauseSeqScore + birthTime
     //println(Console.RED_B+"priority",normclauseSocre,unitClauseSeqScore,queueElementScore.toInt)
 
-    -queueElementScore.toInt
+    queueElementScore.toInt //todo try to inverse the order
   }
 
   private implicit val ord = new Ordering[ChoiceQueueElement] {
