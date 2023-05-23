@@ -91,8 +91,8 @@ class OriginalPriorityChoiceQueue() extends StateQueue {
     val (nc, ucs,birthTime) = s
     //val unitClauseSeqScore = ucs.map(_.constraint.size).sum //+ nc._2.map(_.rs.arity).sum
     //val queueElementScore = unitClauseSeqScore /constraint sum
-    //val queueElementScore = 1 //constant
-    val queueElementScore = birthTime //birth time
+    val queueElementScore = 1 //constant
+    //val queueElementScore = birthTime //birth time
     -queueElementScore.toInt
   }
 
