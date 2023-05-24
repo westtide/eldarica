@@ -32,8 +32,7 @@ import ap.util.Combinatorics
 import lazabs.GlobalParameters
 import lazabs.horn.bottomup.HornClauses.ConstraintClause
 import lazabs.horn.bottomup.NormClause
-
-import lazabs.horn.symex_gnn.{OriginalPriorityChoiceQueue, PriorityChoiceQueue}
+import lazabs.horn.symex_gnn.{OriginalPriorityChoiceQueue, PriorityChoiceQueue, ControlledChoiceQueue}
 
 import scala.collection.mutable.{Queue => MQueue}
 
@@ -62,9 +61,12 @@ class BreadthFirstForwardSymex[CC](clauses: Iterable[CC])(
   //private val choicesQueue = new MQueue[(NormClause, Seq[UnitClause])]
 
   //private val choicesQueue = new PriorityChoiceQueue(normClauseToScore)
-  private val choicesQueue =
+//  private val choicesQueue =
     if (GlobalParameters.get.useGNN) new PriorityChoiceQueue(normClauseToScore)
     else new OriginalPriorityChoiceQueue()
+//  private val choicesQueue =
+//    if (GlobalParameters.get.useGNN) new ControlledChoiceQueue(normClauseToScore)
+//    else new OriginalPriorityChoiceQueue()
 
   /*
    * Initialize the search by adding the facts (the initial states).

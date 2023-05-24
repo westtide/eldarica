@@ -5,17 +5,82 @@ import lazabs.GlobalParameters
 import lazabs.horn.bottomup.{AbstractState, HornClauses, NormClause, RelationSymbol}
 import lazabs.horn.symex.UnitClause
 
-import scala.collection.mutable.{PriorityQueue, Queue => MQueue}
+import scala.collection.mutable.{PriorityQueue, Queue => MQueue, Map => MMap}
 import java.io.{File, PrintWriter}
 import play.api.libs.json.{JsSuccess, JsValue, Json}
 import scala.util.Random
+
 object HornGraphType extends Enumeration {
   val CDHG, CG = Value
+}
+
+class ControlledChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends StateQueue {
+  val processedMap: MMap[(NormClause,Seq[UnitClause]), Boolean] = MMap()
+  val scoreQueue = new PriorityChoiceQueue(normClauseToScore)
+  val originalQueue = new OriginalPriorityChoiceQueue()
+  Random.setSeed(42)
+  def isEmpty: Boolean = {
+    scoreQueue.isEmpty && originalQueue.isEmpty
+  }
+  def size: Int ={
+    scoreQueue.size.max(originalQueue.size)
+  }
+  def enqueue(e: (NormClause, Seq[UnitClause])): Unit = {
+    processedMap += (e -> false)
+    scoreQueue.enqueue(e)
+    originalQueue.enqueue(e)
+  }
+
+  def dequeue(): (NormClause, Seq[UnitClause]) = {
+    val exploration = if (Random.nextDouble() > 0.5) true else false
+    println("-"*10)
+    println("processedMap",processedMap.count(_._2 == false))
+    println("scoreQueue.size: " + scoreQueue.size)
+    println("originalQueue.size: " + originalQueue.size)
+
+    if (exploration == true) {
+      println("dequeue scoreQueue")
+      while (true) {
+        if (scoreQueue.isEmpty) {
+          return originalQueue.dequeue()
+        }
+        else {
+          val e= scoreQueue.dequeue()
+          if (processedMap(e) == false) {
+            processedMap(e) = true
+            return e
+          }
+        }
+      }
+      scoreQueue.dequeue()
+    } else {
+      println("dequeue originalQueue")
+      while (true) {
+        if (originalQueue.isEmpty) {
+          return scoreQueue.dequeue()
+        }
+        else {
+          val e = originalQueue.dequeue()
+          if (processedMap(e) == false) {
+            processedMap(e) = true
+            return e
+          }
+        }
+      }
+      originalQueue.dequeue()
+    }
+
+  }
+
+
+
+
 }
 
 trait StateQueue {
   type TimeType
   type ChoiceQueueElement = (NormClause, Seq[UnitClause], TimeType)
+
 
   def isEmpty: Boolean
 
@@ -33,7 +98,7 @@ class PriorityChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends St
   private var time = 0
 
   //type ChoiceQueueElement = (NormClause, Seq[UnitClause])
-  val coefClauseScoreFromGNN = 100
+  val coefClauseScoreFromGNN = 1000
 
   //println(Console.BLUE+"ChoiceQueue:PriorityChoiceQueue")
   private def priority(s: ChoiceQueueElement) = {
@@ -44,11 +109,11 @@ class PriorityChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends St
 
     //by rank, need to shift val scores=
     //val queueElementScore = normclauseSocre //rank
-    val queueElementScore = normclauseSocre + birthTime //rank + birthTime //alvis running inverse
+    //val queueElementScore = normclauseSocre + birthTime //rank + birthTime
     //val queueElementScore = normclauseSocre + unitClauseSeqScore //rank + unitClauseSeqScore
     //val queueElementScore = normclauseSocre + birthTime + unitClauseSeqScore //rank + birthTime + unitClauseSeqScore
     //by score, need to shift val scores=
-    //val queueElementScore = normclauseSocre * coefClauseScoreFromGNN
+    val queueElementScore = normclauseSocre * coefClauseScoreFromGNN //alvis running inverse score*1000
     //val queueElementScore = normclauseSocre * coefClauseScoreFromGNN + unitClauseSeqScore
     //val queueElementScore = normclauseSocre * coefClauseScoreFromGNN + birthTime
     //val queueElementScore = normclauseSocre * coefClauseScoreFromGNN + unitClauseSeqScore + birthTime
@@ -76,10 +141,11 @@ class PriorityChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends St
   }
 
   def dequeue(): (NormClause, Seq[UnitClause]) = {
-    val (nc, ucs,birthTime) = states.dequeue
+    val (nc, ucs, birthTime) = states.dequeue
     //println(Console.BLUE + "dequeue", "birthTime", birthTime)
     (nc, ucs)
   }
+
   override def incTime: Unit =
     time = time + 1
 }
@@ -87,8 +153,9 @@ class PriorityChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends St
 class OriginalPriorityChoiceQueue() extends StateQueue {
   type TimeType = Int
   private var time = 0
+
   private def priority(s: ChoiceQueueElement) = {
-    val (nc, ucs,birthTime) = s
+    val (nc, ucs, birthTime) = s
     //val unitClauseSeqScore = ucs.map(_.constraint.size).sum //+ nc._2.map(_.rs.arity).sum
     //val queueElementScore = unitClauseSeqScore /constraint sum
     val queueElementScore = 1 //constant
@@ -99,12 +166,6 @@ class OriginalPriorityChoiceQueue() extends StateQueue {
   private implicit val ord = new Ordering[ChoiceQueueElement] {
     def compare(s: ChoiceQueueElement, t: ChoiceQueueElement) = {
       priority(t) - priority(s)
-//      if(Random.nextDouble()>0.5){
-//        1
-//      }else{
-//        0
-//      }
-
     }
   }
   private val states = new PriorityQueue[ChoiceQueueElement]
@@ -117,11 +178,11 @@ class OriginalPriorityChoiceQueue() extends StateQueue {
 
   def enqueue(e: (NormClause, Seq[UnitClause])): Unit = {
     //println(Console.BLUE+"enqueue",e._1,e._2)
-    states += ((e._1, e._2,time))
+    states += ((e._1, e._2, time))
   }
 
   def dequeue(): (NormClause, Seq[UnitClause]) = {
-    val (nc, ucs,_) = states.dequeue
+    val (nc, ucs, _) = states.dequeue
     (nc, ucs)
   }
 
@@ -143,8 +204,8 @@ object clausePriorityGNN {
     val predictedLogitsFromGraph = readJsonFieldDouble(graphFileName, readLabelName = "predictedLabelLogit")
     //normalize scores
     val normalizedLogits = predictedLogitsFromGraph.map(x => (x - predictedLogitsFromGraph.min) / (predictedLogitsFromGraph.max - predictedLogitsFromGraph.min))
-    val (ranks,stableRanks)= rankFloatList(normalizedLogits)
-    val scores=stableRanks
+    val (ranks, stableRanks) = rankFloatList(normalizedLogits)
+    val scores = normalizedLogits
 
     //for CDHG map predicted (read) Logits to correct clause number, for CG just return normalizedLogits
     val predictedLogits = GlobalParameters.get.hornGraphType match {
