@@ -114,13 +114,13 @@ class PriorityChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends St
     //val queueElementScore = normclauseSocre + unitClauseSeqScore //rank + unitClauseSeqScore
     //val queueElementScore = normclauseSocre + birthTime + unitClauseSeqScore //rank + birthTime + unitClauseSeqScore
     //by score, need to shift val scores=
-    //val queueElementScore = normclauseSocre * coefClauseScoreFromGNN //score
+    val queueElementScore = normclauseSocre * coefClauseScoreFromGNN //score
     //val queueElementScore = normclauseSocre * coefClauseScoreFromGNN + unitClauseSeqScore
-    val queueElementScore = normclauseSocre * coefClauseScoreFromGNN + birthTime ////alvis running inverse score*1000
+    //val queueElementScore = normclauseSocre * coefClauseScoreFromGNN + birthTime ////alvis running inverse score*1000
     //val queueElementScore = normclauseSocre * coefClauseScoreFromGNN + unitClauseSeqScore + birthTime
     //println(Console.RED_B+"priority",normclauseSocre,unitClauseSeqScore,queueElementScore.toInt)
 
-    queueElementScore.toInt
+    -queueElementScore.toInt
   }
 
   private implicit val ord = new Ordering[ChoiceQueueElement] {
@@ -154,13 +154,14 @@ class PriorityChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends St
 class OriginalPriorityChoiceQueue() extends StateQueue {
   type TimeType = Int
   private var time = 0
+  Random.setSeed(42)
 
   private def priority(s: ChoiceQueueElement) = {
     val (nc, ucs, birthTime) = s
     //val unitClauseSeqScore = ucs.map(_.constraint.size).sum //+ nc._2.map(_.rs.arity).sum
     //val queueElementScore = unitClauseSeqScore /constraint sum
-    //val queueElementScore = 1 //constant
-    val queueElementScore = Random.nextInt(1000) //random
+    val queueElementScore = 1 //constant
+    //val queueElementScore = Random.nextInt(1000) //random
     //val queueElementScore = birthTime //birth time
     -queueElementScore.toInt
   }
