@@ -15,16 +15,19 @@ object HornGraphType extends Enumeration {
 }
 
 class ControlledChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends StateQueue {
-  val processedMap: MMap[(NormClause,Seq[UnitClause]), Boolean] = MMap()
+  val processedMap: MMap[(NormClause, Seq[UnitClause]), Boolean] = MMap()
   val scoreQueue = new PriorityChoiceQueue(normClauseToScore)
   val originalQueue = new OriginalPriorityChoiceQueue()
   Random.setSeed(42)
+
   def isEmpty: Boolean = {
-    scoreQueue.isEmpty && originalQueue.isEmpty
+    processedMap.count(_._2 == false) == 0
   }
-  def size: Int ={
+
+  def size: Int = {
     scoreQueue.size.max(originalQueue.size)
   }
+
   def enqueue(e: (NormClause, Seq[UnitClause])): Unit = {
     processedMap += (e -> false)
     scoreQueue.enqueue(e)
@@ -33,10 +36,10 @@ class ControlledChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends 
 
   def dequeue(): (NormClause, Seq[UnitClause]) = {
     val exploration = if (Random.nextDouble() > 0.5) true else false
-    println("-"*10)
-    println("processedMap",processedMap.count(_._2 == false))
-    println("scoreQueue.size: " + scoreQueue.size)
-    println("originalQueue.size: " + originalQueue.size)
+    println("-" * 10)
+    println(Console.BLUE + "processedMap", processedMap.size, "false", processedMap.count(_._2 == false))
+    println(Console.BLUE + "scoreQueue.size: " + scoreQueue.size)
+    println(Console.BLUE + "originalQueue.size: " + originalQueue.size)
 
     if (exploration == true) {
       println("dequeue scoreQueue")
@@ -45,7 +48,7 @@ class ControlledChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends 
           return originalQueue.dequeue()
         }
         else {
-          val e= scoreQueue.dequeue()
+          val e = scoreQueue.dequeue()
           if (processedMap(e) == false) {
             processedMap(e) = true
             return e
@@ -71,8 +74,6 @@ class ControlledChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends 
     }
 
   }
-
-
 
 
 }
