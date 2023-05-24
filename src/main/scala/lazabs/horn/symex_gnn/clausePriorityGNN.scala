@@ -36,13 +36,13 @@ class ControlledChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends 
 
   def dequeue(): (NormClause, Seq[UnitClause]) = {
     val exploration = if (Random.nextDouble() > 0.5) true else false
-    println("-" * 10)
-    println(Console.BLUE + "processedMap", processedMap.size, "false", processedMap.count(_._2 == false))
-    println(Console.BLUE + "scoreQueue.size: " + scoreQueue.size)
-    println(Console.BLUE + "originalQueue.size: " + originalQueue.size)
+    //println("-" * 10)
+    //println(Console.BLUE + "processedMap", processedMap.size, "false", processedMap.count(_._2 == false))
+    //println(Console.BLUE + "scoreQueue.size: " + scoreQueue.size)
+    //println(Console.BLUE + "originalQueue.size: " + originalQueue.size)
 
     if (exploration == true) {
-      println("dequeue scoreQueue")
+      //println("dequeue scoreQueue")
       while (true) {
         if (scoreQueue.isEmpty) {
           return originalQueue.dequeue()
@@ -57,7 +57,7 @@ class ControlledChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends 
       }
       scoreQueue.dequeue()
     } else {
-      println("dequeue originalQueue")
+      //println("dequeue originalQueue")
       while (true) {
         if (originalQueue.isEmpty) {
           return scoreQueue.dequeue()
@@ -114,13 +114,13 @@ class PriorityChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends St
     //val queueElementScore = normclauseSocre + unitClauseSeqScore //rank + unitClauseSeqScore
     //val queueElementScore = normclauseSocre + birthTime + unitClauseSeqScore //rank + birthTime + unitClauseSeqScore
     //by score, need to shift val scores=
-    val queueElementScore = normclauseSocre * coefClauseScoreFromGNN //alvis running inverse score*1000
+    //val queueElementScore = normclauseSocre * coefClauseScoreFromGNN //score
     //val queueElementScore = normclauseSocre * coefClauseScoreFromGNN + unitClauseSeqScore
-    //val queueElementScore = normclauseSocre * coefClauseScoreFromGNN + birthTime
+    val queueElementScore = normclauseSocre * coefClauseScoreFromGNN + birthTime ////alvis running inverse score*1000
     //val queueElementScore = normclauseSocre * coefClauseScoreFromGNN + unitClauseSeqScore + birthTime
     //println(Console.RED_B+"priority",normclauseSocre,unitClauseSeqScore,queueElementScore.toInt)
 
-    queueElementScore.toInt //todo try to inverse the order
+    queueElementScore.toInt
   }
 
   private implicit val ord = new Ordering[ChoiceQueueElement] {
@@ -159,7 +159,8 @@ class OriginalPriorityChoiceQueue() extends StateQueue {
     val (nc, ucs, birthTime) = s
     //val unitClauseSeqScore = ucs.map(_.constraint.size).sum //+ nc._2.map(_.rs.arity).sum
     //val queueElementScore = unitClauseSeqScore /constraint sum
-    val queueElementScore = 1 //constant
+    //val queueElementScore = 1 //constant
+    val queueElementScore = Random.nextInt(1000) //random
     //val queueElementScore = birthTime //birth time
     -queueElementScore.toInt
   }
