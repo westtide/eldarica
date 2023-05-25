@@ -15,10 +15,11 @@ object HornGraphType extends Enumeration {
 }
 
 class ControlledChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends StateQueue {
-  val processedMap: MMap[(NormClause, Seq[UnitClause]), Boolean] = MMap()
-  val scoreQueue = new OriginalPriorityChoiceQueue()//new PriorityChoiceQueue(normClauseToScore)
-  val originalQueue = new OriginalPriorityChoiceQueue()
   Random.setSeed(42)
+  val processedMap: MMap[(NormClause, Seq[UnitClause]), Boolean] = MMap()
+  val scoreQueue = new RandomPriorityChoiceQueue()//new OriginalPriorityChoiceQueue()//new PriorityChoiceQueue(normClauseToScore)
+  val originalQueue = new RandomPriorityChoiceQueue() //new OriginalPriorityChoiceQueue()
+
 
   //todo: try only original queue to see how much cost of this implementation
   def isEmpty: Boolean = {
@@ -190,6 +191,38 @@ class OriginalPriorityChoiceQueue() extends StateQueue {
     (nc, ucs)
   }
 
+  override def incTime: Unit =
+    time = time + 1
+}
+
+
+class RandomPriorityChoiceQueue() extends StateQueue {
+  type TimeType = Int
+  private var time = 0
+  Random.setSeed(42)
+
+  private def priority(s: ChoiceQueueElement) = {
+    val queueElementScore = Random.nextInt(1000) //random
+    -queueElementScore.toInt
+  }
+  private implicit val ord = new Ordering[ChoiceQueueElement] {
+    def compare(s: ChoiceQueueElement, t: ChoiceQueueElement) = {
+      priority(t) - priority(s)
+    }
+  }
+  private val states = new PriorityQueue[ChoiceQueueElement]
+  def isEmpty: Boolean =
+    states.isEmpty
+  def size: Int =
+    states.size
+  def enqueue(e: (NormClause, Seq[UnitClause])): Unit = {
+    //println(Console.BLUE+"enqueue",e._1,e._2)
+    states += ((e._1, e._2, time))
+  }
+  def dequeue(): (NormClause, Seq[UnitClause]) = {
+    val (nc, ucs, _) = states.dequeue
+    (nc, ucs)
+  }
   override def incTime: Unit =
     time = time + 1
 }
