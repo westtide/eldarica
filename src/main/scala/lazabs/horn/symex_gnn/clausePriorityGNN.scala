@@ -16,10 +16,11 @@ object HornGraphType extends Enumeration {
 
 class ControlledChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends StateQueue {
   val processedMap: MMap[(NormClause, Seq[UnitClause]), Boolean] = MMap()
-  val scoreQueue = new PriorityChoiceQueue(normClauseToScore)
+  val scoreQueue = new OriginalPriorityChoiceQueue()//new PriorityChoiceQueue(normClauseToScore)
   val originalQueue = new OriginalPriorityChoiceQueue()
   Random.setSeed(42)
 
+  //todo: try only original queue to see how much cost of this implementation
   def isEmpty: Boolean = {
     processedMap.count(_._2 == false) == 0
   }
