@@ -17,11 +17,10 @@ object HornGraphType extends Enumeration {
 class ControlledChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends StateQueue {
   Random.setSeed(42)
   val processedMap: MMap[(NormClause, Seq[UnitClause]), Boolean] = MMap()
-  val scoreQueue = new RandomPriorityChoiceQueue()//new OriginalPriorityChoiceQueue()//new PriorityChoiceQueue(normClauseToScore)
-  val originalQueue = new RandomPriorityChoiceQueue() //new OriginalPriorityChoiceQueue()
+  val scoreQueue = new PriorityChoiceQueue(normClauseToScore)
+  val originalQueue = new OriginalPriorityChoiceQueue()
 
 
-  //todo: try only original queue to see how much cost of this implementation
   def isEmpty: Boolean = {
     processedMap.count(_._2 == false) == 0
   }
@@ -107,16 +106,16 @@ class PriorityChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends St
   private def priority(s: ChoiceQueueElement) = {
     val (nc, ucs, birthTime) = s
     val normclauseSocre = normClauseToScore(nc)
-    val unitClauseSeqScore = ucs.map(_.constraint.size).sum //+ nc._2.map(_.rs.arity).sum
+    //val unitClauseSeqScore = ucs.map(_.constraint.size).sum //+ nc._2.map(_.rs.arity).sum
 
 
     //by rank, need to shift val scores=
-    //val queueElementScore = normclauseSocre //rank
+    val queueElementScore = normclauseSocre //rank
     //val queueElementScore = normclauseSocre + birthTime //rank + birthTime
     //val queueElementScore = normclauseSocre + unitClauseSeqScore //rank + unitClauseSeqScore
     //val queueElementScore = normclauseSocre + birthTime + unitClauseSeqScore //rank + birthTime + unitClauseSeqScore
     //by score, need to shift val scores=
-    val queueElementScore = normclauseSocre * coefClauseScoreFromGNN //score
+    //val queueElementScore = normclauseSocre * coefClauseScoreFromGNN //score
     //val queueElementScore = normclauseSocre * coefClauseScoreFromGNN + unitClauseSeqScore
     //val queueElementScore = normclauseSocre * coefClauseScoreFromGNN + birthTime ////alvis running inverse score*1000
     //val queueElementScore = normclauseSocre * coefClauseScoreFromGNN + unitClauseSeqScore + birthTime
@@ -242,7 +241,7 @@ object clausePriorityGNN {
     //normalize scores
     val normalizedLogits = predictedLogitsFromGraph.map(x => (x - predictedLogitsFromGraph.min) / (predictedLogitsFromGraph.max - predictedLogitsFromGraph.min))
     val (ranks, stableRanks) = rankFloatList(normalizedLogits)
-    val scores = normalizedLogits
+    val scores = stableRanks
 
     //for CDHG map predicted (read) Logits to correct clause number, for CG just return normalizedLogits
     val predictedLogits = GlobalParameters.get.hornGraphType match {
