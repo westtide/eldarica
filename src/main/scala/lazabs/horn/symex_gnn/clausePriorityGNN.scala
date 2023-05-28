@@ -110,8 +110,8 @@ class PriorityChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends St
 
 
     //by rank, need to shift val scores=
-    //val queueElementScore = normclauseSocre //rank
-    val queueElementScore = normclauseSocre + birthTime //rank + birthTime
+    val queueElementScore = normclauseSocre //rank
+    //val queueElementScore = normclauseSocre + birthTime //rank + birthTime
     //val queueElementScore = normclauseSocre + unitClauseSeqScore //rank + unitClauseSeqScore
     //val queueElementScore = normclauseSocre + birthTime + unitClauseSeqScore //rank + birthTime + unitClauseSeqScore
     //by score, need to shift val scores=
