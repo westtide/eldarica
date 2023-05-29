@@ -16,9 +16,9 @@ object HornGraphType extends Enumeration {
 
 class ControlledChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends StateQueue {
   Random.setSeed(42)
-  val processedMap: MMap[(NormClause, Seq[UnitClause]), Boolean] = MMap() //todo: use MHashSet
+  //val processedMap : MMap[(NormClause, Seq[UnitClause]), Boolean]=MMap()
   val processedHashSet = new MHashSet[(NormClause, Seq[UnitClause])]()
-  val scoreQueue = new PriorityChoiceQueue(normClauseToScore)
+  val scoreQueue = new OriginalPriorityChoiceQueue()//new PriorityChoiceQueue(normClauseToScore)
   val originalQueue = new OriginalPriorityChoiceQueue()
 
 
@@ -53,19 +53,10 @@ class ControlledChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends 
       if(processedHashSet.contains(e))
         dequeue() //do nothing and go to next iteration
       else {
-        processedHashSet.add(e)// += e
+        processedHashSet.add(e)
         e
       }
-//      if (processedMap(e) == false) {
-//        processedMap(e) = true
-//        e
-//      }
-//      else {
-//        dequeue()
-//      }
     }
-
-
 
 //        if (exploration == true) {
 //          //println("dequeue scoreQueue")
