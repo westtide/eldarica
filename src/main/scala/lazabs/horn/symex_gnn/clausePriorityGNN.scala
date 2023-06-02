@@ -326,6 +326,8 @@ object clausePriorityGNN {
   }
 
   def readSMTFormatFromFile(fileName: String): Clauses = {
+    if (GlobalParameters.get.log)
+      println(Console.BLUE + "-" * 10 + "read CHCs from file" + fileName + "-" * 10)
     val _hornTranslator = new HornTranslator
     fromSMT(fileName) map ((_hornTranslator).transform(_))
   }
