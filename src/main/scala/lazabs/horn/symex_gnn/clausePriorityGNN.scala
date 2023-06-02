@@ -2,14 +2,14 @@ package lazabs.horn.symex_gnn
 
 import ap.terfor.conjunctions.Conjunction
 import lazabs.GlobalParameters
-import lazabs.horn.bottomup.{AbstractState, HornClauses, NormClause, RelationSymbol}
+import lazabs.horn.bottomup.{AbstractState, HornClauses, HornTranslator,NormClause, RelationSymbol}
 import lazabs.horn.symex.UnitClause
-
+import lazabs.horn.parser.HornReader.fromSMT
 import scala.collection.mutable.{PriorityQueue, Queue => MQueue, Map => MMap, HashSet => MHashSet}
 import java.io.{File, PrintWriter}
 import play.api.libs.json.{JsSuccess, JsValue, Json}
 import scala.util.Random
-
+import lazabs.horn.preprocessor.HornPreprocessor.Clauses
 object HornGraphType extends Enumeration {
   val CDHG, CG = Value
 }
@@ -323,6 +323,11 @@ object clausePriorityGNN {
     val stableRankMap = values.toSet.toList.sorted.reverse.zipWithIndex.toMap
     val StableRanks = for (v <- values) yield stableRankMap(v).toDouble
     (ranks, StableRanks)
+  }
+
+  def readSMTFormatFromFile(fileName: String): Clauses = {
+    val _hornTranslator = new HornTranslator
+    fromSMT(fileName) map ((_hornTranslator).transform(_))
   }
 
 

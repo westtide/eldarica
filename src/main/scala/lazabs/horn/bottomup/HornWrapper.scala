@@ -59,7 +59,7 @@ import lazabs.horn.symex.{BreadthFirstForwardSymex, DepthFirstForwardSymex, Syme
 
 import scala.collection.mutable.{HashSet => MHashSet, HashMap => MHashMap,
                                  LinkedHashMap}
-
+import lazabs.horn.symex_gnn.clausePriorityGNN.readSMTFormatFromFile
 
 object HornWrapper {
 
@@ -368,10 +368,12 @@ class HornWrapper(constraints  : Seq[HornClause],
 
   def standardCheck() : ResultType = {
     //read simplified smt2 file if it exists
+    val simplifiedClausesFileName = GlobalParameters.get.fileName + ".simplified.smt2"
     val (simplifiedClauses, allHints, preprocBackTranslator) =
-      if (GlobalParameters.get.fileName .contains( ".simplified.smt2")) //if it is a simplifed.smt2 file, skip preprocessing
-        (unsimplifiedClauses, hints, HornPreprocessor.IDENTITY_TRANSLATOR)
-      else
+      if (new java.io.File(simplifiedClausesFileName).exists){ //if .simplified.smt2 existed read from there
+        println(Console.BLUE + "-" * 10 + "read CHCs from simplified file" + "-" * 10)
+        (readSMTFormatFromFile(simplifiedClausesFileName), hints, HornPreprocessor.IDENTITY_TRANSLATOR)
+      } else
         preprocessClauses(unsimplifiedClauses, hints)
 
     val symexEngine = getSymex(simplifiedClauses)
