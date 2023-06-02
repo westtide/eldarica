@@ -18,7 +18,7 @@ class ControlledChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends 
   Random.setSeed(42)
   //val processedMap : MMap[(NormClause, Seq[UnitClause]), Boolean]=MMap()
   val processedHashSet = new MHashSet[(NormClause, Seq[UnitClause])]()
-  val scoreQueue = new OriginalPriorityChoiceQueue()//new PriorityChoiceQueue(normClauseToScore)
+  val scoreQueue = new PriorityChoiceQueue(normClauseToScore)
   val originalQueue = new OriginalPriorityChoiceQueue()
 
 
@@ -38,7 +38,9 @@ class ControlledChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends 
   }
 
   def dequeue(): (NormClause, Seq[UnitClause]) = {
-    val exploration = Random.nextDouble() > 0.5
+    val exploration = Random.nextDouble() > -1 //only use score queue
+    //val exploration = Random.nextDouble() < -1 //only use original queue
+    //val exploration = Random.nextDouble() > 0.5 //
     //println("-" * 10)
     //println(Console.BLUE + "processedMap", processedMap.size, "false", processedMap.count(_._2 == false))
 //    println(Console.BLUE + "processedHashSet.size: " + processedHashSet.size)
