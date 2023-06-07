@@ -252,6 +252,11 @@ class RandomPriorityChoiceQueue() extends StateQueue {
 
 object clausePriorityGNN {
 
+  def readClauseLabel[CC](clauses: Iterable[CC]): Map[CC, Double] = {
+    val labelFileName = GlobalParameters.get.fileName + ".counterExampleIndex.JSON"
+    val labels = readJsonFieldInt(labelFileName, readLabelName = "counterExampleLabels")
+    (for ((c, s) <- clauses.zip(labels)) yield (c, s.toDouble)).toMap
+  }
 
   def readClauseScores[CC](clauses: Iterable[CC]): Map[CC, Double] = {
     //get graph file name
@@ -267,7 +272,7 @@ object clausePriorityGNN {
     val (ranks, stableRanks) = rankFloatList(normalizedLogits)
     val scores = normalizedLogits
 
-    //for CDHG map predicted (read) Logits to correct clause number, for CG just return normalizedLogits
+    //for CDHG map predicted (read) Logits to correct clause number, for CG just return normalized Logits
     val predictedLogits = GlobalParameters.get.hornGraphType match {
       case HornGraphType.CDHG => {
         val labelMask = readJsonFieldInt(graphFileName, readLabelName = "labelMask")
