@@ -110,8 +110,8 @@ abstract class Symex[CC](iClauses:    Iterable[CC])(
   //get normClauseToScore map
   val (clauseToScore: Map[CC, Double],normClauseToScore: Map[NormClause, Double]) = {
     if(GlobalParameters.get.useGNN){
-      //val clauseToScore: Map[CC, Double] = readClauseScores(iClauses)
-      val clauseToScore: Map[CC, Double] = readClauseLabel(iClauses)
+      //val clauseToScore: Map[CC, Double] = readClauseScores(iClauses) //require graph JSON file
+      val clauseToScore: Map[CC, Double] = readClauseLabel(iClauses) // require label JSON file
       val normClauseToScore: Map[NormClause, Double] = (for ((normClause, _) <- normClauses) yield
         (normClause, clauseToScore(normClauseToCC(normClause)))).toMap //can reverse the score here
       if (GlobalParameters.get.log) {
