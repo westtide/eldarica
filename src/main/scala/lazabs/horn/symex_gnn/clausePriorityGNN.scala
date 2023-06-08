@@ -17,6 +17,7 @@ object HornGraphType extends Enumeration {
 
 class ControlledChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends StateQueue {
   Random.setSeed(42)
+  //git test
   //val processedMap : MMap[(NormClause, Seq[UnitClause]), Boolean]=MMap()
   val processedHashSet = new MHashSet[(NormClause, Seq[UnitClause])]()
   val scoreQueue =
