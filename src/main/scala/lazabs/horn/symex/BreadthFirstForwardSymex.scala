@@ -64,9 +64,7 @@ class BreadthFirstForwardSymex[CC](clauses: Iterable[CC])(
 //  private val choicesQueue =
 //    if (GlobalParameters.get.useGNN) new PriorityChoiceQueue(normClauseToScore)
 //    else new OriginalPriorityChoiceQueue()
-    private val choicesQueue =
-      if (GlobalParameters.get.useGNN) new ControlledChoiceQueue(normClauseToScore)
-      else new OriginalPriorityChoiceQueue()
+    private val choicesQueue = new ControlledChoiceQueue(normClauseToScore)
 
   /*
    * Initialize the search by adding the facts (the initial states).

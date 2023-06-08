@@ -2,7 +2,7 @@ package lazabs.horn.symex_gnn
 
 import ap.terfor.conjunctions.Conjunction
 import lazabs.GlobalParameters
-import lazabs.horn.bottomup.{AbstractState, HornClauses, HornTranslator,NormClause, RelationSymbol}
+import lazabs.horn.bottomup.{AbstractState, HornClauses, HornTranslator, NormClause, RelationSymbol}
 import lazabs.horn.symex.UnitClause
 import lazabs.horn.parser.HornReader.fromSMT
 import scala.collection.mutable.{PriorityQueue, Queue => MQueue, Map => MMap, HashSet => MHashSet}
@@ -10,6 +10,7 @@ import java.io.{File, PrintWriter}
 import play.api.libs.json.{JsSuccess, JsValue, Json}
 import scala.util.Random
 import lazabs.horn.preprocessor.HornPreprocessor.Clauses
+
 object HornGraphType extends Enumeration {
   val CDHG, CG = Value
 }
@@ -18,7 +19,12 @@ class ControlledChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends 
   Random.setSeed(42)
   //val processedMap : MMap[(NormClause, Seq[UnitClause]), Boolean]=MMap()
   val processedHashSet = new MHashSet[(NormClause, Seq[UnitClause])]()
-  val scoreQueue = new PriorityChoiceQueue(normClauseToScore)
+  val scoreQueue =
+    if (GlobalParameters.get.useGNN)
+      new PriorityChoiceQueue(normClauseToScore)
+    else
+      new OriginalPriorityChoiceQueue()
+
   val originalQueue = new OriginalPriorityChoiceQueue()
 
 
@@ -32,7 +38,7 @@ class ControlledChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends 
   }
 
   def enqueue(e: (NormClause, Seq[UnitClause])): Unit = {
-   // processedMap += (e -> false)
+    // processedMap += (e -> false)
     scoreQueue.enqueue(e)
     originalQueue.enqueue(e)
   }
@@ -43,16 +49,16 @@ class ControlledChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends 
     //val exploration = Random.nextDouble() > 0.5 //
     //println("-" * 10)
     //println(Console.BLUE + "processedMap", processedMap.size, "false", processedMap.count(_._2 == false))
-//    println(Console.BLUE + "processedHashSet.size: " + processedHashSet.size)
-//    println(Console.BLUE + "scoreQueue.size: " + scoreQueue.size,scoreQueue.isEmpty)
-//    println(Console.BLUE + "originalQueue.size: " + originalQueue.size,originalQueue.isEmpty)
-//    println(Console.BLUE + "exploration: " + exploration)
+    //    println(Console.BLUE + "processedHashSet.size: " + processedHashSet.size)
+    //    println(Console.BLUE + "scoreQueue.size: " + scoreQueue.size,scoreQueue.isEmpty)
+    //    println(Console.BLUE + "originalQueue.size: " + originalQueue.size,originalQueue.isEmpty)
+    //    println(Console.BLUE + "exploration: " + exploration)
     val queue = if (exploration) scoreQueue else originalQueue //if both empty, then stack overflow
     if (queue.isEmpty)
       dequeue()
     else {
       val e = queue.dequeue()
-      if(processedHashSet.contains(e))
+      if (processedHashSet.contains(e))
         dequeue() //do nothing and go to next iteration
       else {
         processedHashSet.add(e)
@@ -60,38 +66,38 @@ class ControlledChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends 
       }
     }
 
-//        if (exploration == true) {
-//          //println("dequeue scoreQueue")
-//          while (true) {
-//            if (scoreQueue.isEmpty) {
-//              return originalQueue.dequeue()
-//            }
-//            else {
-//              val e = scoreQueue.dequeue()
-//              if (processedMap(e) == false) {
-//                processedMap(e) = true
-//                return e
-//              }
-//            }
-//          }
-//          scoreQueue.dequeue()
-//        } else {
-//          //println("dequeue originalQueue")
-//          while (true) {
-//            if (originalQueue.isEmpty) {
-//              return scoreQueue.dequeue()
-//            }
-//            else {
-//              val e = originalQueue.dequeue()
-//              if (processedMap(e) == false) {
-//                processedMap(e) = true
-//                return e
-//              }
-//            }
-//          }
-//          originalQueue.dequeue()
-//        }
-//
+    //        if (exploration == true) {
+    //          //println("dequeue scoreQueue")
+    //          while (true) {
+    //            if (scoreQueue.isEmpty) {
+    //              return originalQueue.dequeue()
+    //            }
+    //            else {
+    //              val e = scoreQueue.dequeue()
+    //              if (processedMap(e) == false) {
+    //                processedMap(e) = true
+    //                return e
+    //              }
+    //            }
+    //          }
+    //          scoreQueue.dequeue()
+    //        } else {
+    //          //println("dequeue originalQueue")
+    //          while (true) {
+    //            if (originalQueue.isEmpty) {
+    //              return scoreQueue.dequeue()
+    //            }
+    //            else {
+    //              val e = originalQueue.dequeue()
+    //              if (processedMap(e) == false) {
+    //                processedMap(e) = true
+    //                return e
+    //              }
+    //            }
+    //          }
+    //          originalQueue.dequeue()
+    //        }
+    //
   }
 
 
@@ -180,7 +186,6 @@ class OriginalPriorityChoiceQueue() extends StateQueue {
     //val unitClauseSeqScore = ucs.map(_.constraint.size).sum //+ nc._2.map(_.rs.arity).sum
     //val queueElementScore = unitClauseSeqScore /constraint sum
     val queueElementScore = 1 //constant
-    //val queueElementScore = Random.nextInt(1000) //random
     //val queueElementScore = birthTime //birth time
     -queueElementScore.toInt
   }
