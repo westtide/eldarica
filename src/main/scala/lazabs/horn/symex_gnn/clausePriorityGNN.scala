@@ -23,7 +23,7 @@ class ControlledChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends 
     if (GlobalParameters.get.useGNN)
       new PriorityChoiceQueue(normClauseToScore)
     else
-      new OriginalPriorityChoiceQueue()
+      new RandomPriorityChoiceQueue()
 
   val originalQueue = new OriginalPriorityChoiceQueue()
 
@@ -145,7 +145,7 @@ class PriorityChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends St
     //val queueElementScore = normclauseSocre * coefClauseScoreFromGNN + unitClauseSeqScore + birthTime
     //println(Console.RED_B+"priority",normclauseSocre,unitClauseSeqScore,queueElementScore.toInt)
 
-    -queueElementScore.toInt
+    queueElementScore.toInt
   }
 
   private implicit val ord = new Ordering[ChoiceQueueElement] {
