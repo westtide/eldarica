@@ -44,9 +44,9 @@ class ControlledChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends 
   }
 
   def dequeue(): (NormClause, Seq[UnitClause]) = {
-    //val exploration = Random.nextDouble() > -1 //only use score queue
-    //val exploration = Random.nextDouble() < -1 //only use original queue
-    val exploration = Random.nextDouble() > 0.5 // half score queue and half random/original queue
+    val exploration = Random.nextDouble() > -1 //only use score queue
+    //val exploration = Random.nextDouble() < -1 //only use original/random queue
+    //val exploration = Random.nextDouble() > 0.5 // more than 0.5 means use more random/original queue
     //println("-" * 10)
     //println(Console.BLUE + "processedMap", processedMap.size, "false", processedMap.count(_._2 == false))
     //    println(Console.BLUE + "processedHashSet.size: " + processedHashSet.size)
@@ -130,19 +130,19 @@ class PriorityChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends St
   private def priority(s: ChoiceQueueElement) = {
     val (nc, ucs, birthTime) = s
     val normclauseSocre = normClauseToScore(nc)
-    //val unitClauseSeqScore = ucs.map(_.constraint.size).sum //+ nc._2.map(_.rs.arity).sum
+    val unitClauseSeqScore = ucs.map(_.constraint.size).sum //+ nc._2.map(_.rs.arity).sum
 
-
+    //println("normclauseSocre",normclauseSocre,ucs.size,unitClauseSeqScore,birthTime)
     //by rank, need to shift val scores=
-    val queueElementScore = normclauseSocre //rank
-    //val queueElementScore = normclauseSocre + birthTime //rank + birthTime
-    //val queueElementScore = normclauseSocre + unitClauseSeqScore //rank + unitClauseSeqScore
-    //val queueElementScore = normclauseSocre + birthTime + unitClauseSeqScore //rank + birthTime + unitClauseSeqScore
+    //val queueElementScore = normclauseSocre //rank
+    //val queueElementScore = normclauseSocre - birthTime //rank + birthTime
+    //val queueElementScore = normclauseSocre - unitClauseSeqScore //rank + unitClauseSeqScore
+    //val queueElementScore = normclauseSocre - birthTime - unitClauseSeqScore //rank + birthTime + unitClauseSeqScore
     //by score, need to shift val scores=
     //val queueElementScore = normclauseSocre * coefClauseScoreFromGNN //score
     //val queueElementScore = normclauseSocre * coefClauseScoreFromGNN + unitClauseSeqScore
-    //val queueElementScore = normclauseSocre * coefClauseScoreFromGNN + birthTime ////alvis running inverse score*1000
-    //val queueElementScore = normclauseSocre * coefClauseScoreFromGNN + unitClauseSeqScore + birthTime
+    //val queueElementScore = normclauseSocre * coefClauseScoreFromGNN - birthTime ////alvis running inverse score*1000
+    val queueElementScore = normclauseSocre * coefClauseScoreFromGNN - unitClauseSeqScore - birthTime
     //println(Console.RED_B+"priority",normclauseSocre,unitClauseSeqScore,queueElementScore.toInt)
 
     -queueElementScore.toInt
@@ -162,7 +162,8 @@ class PriorityChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends St
     states.size
 
   def enqueue(e: (NormClause, Seq[UnitClause])): Unit = {
-    //println(Console.BLUE+"enqueue",e._1,e._2)
+    incTime
+    //println(Console.BLUE+"enqueue",e._1,e._2,e._2.map(_.constraint.size).sum ,time)
     states += ((e._1, e._2, time))
   }
 
@@ -275,7 +276,7 @@ object clausePriorityGNN {
     //normalize scores
     val normalizedLogits = predictedLogitsFromGraph.map(x => (x - predictedLogitsFromGraph.min) / (predictedLogitsFromGraph.max - predictedLogitsFromGraph.min))
     val (ranks, stableRanks) = rankFloatList(normalizedLogits)
-    val scores = stableRanks
+    val scores = normalizedLogits
 
     //for CDHG map predicted (read) Logits to correct clause number, for CG just return normalized Logits
     val predictedLogits = GlobalParameters.get.hornGraphType match {
