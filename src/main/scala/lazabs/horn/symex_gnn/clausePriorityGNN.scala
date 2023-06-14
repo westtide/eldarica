@@ -44,9 +44,9 @@ class ControlledChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends 
   }
 
   def dequeue(): (NormClause, Seq[UnitClause]) = {
-    val exploration = Random.nextDouble() > -1 //only use score queue
+    //val exploration = Random.nextDouble() > -1 //only use score queue
     //val exploration = Random.nextDouble() < -1 //only use original/random queue
-    //val exploration = Random.nextDouble() > 0.5 // more than 0.5 means use more random/original queue
+    val exploration = Random.nextDouble() > 0.5 // more than 0.5 means use more random/original queue
     //println("-" * 10)
     //println(Console.BLUE + "processedMap", processedMap.size, "false", processedMap.count(_._2 == false))
     //    println(Console.BLUE + "processedHashSet.size: " + processedHashSet.size)
@@ -124,7 +124,7 @@ class PriorityChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends St
   private var time = 0
 
   //type ChoiceQueueElement = (NormClause, Seq[UnitClause])
-  val coefClauseScoreFromGNN = 100
+  val coefClauseScoreFromGNN = 1000
 
   //println(Console.BLUE+"ChoiceQueue:PriorityChoiceQueue")
   private def priority(s: ChoiceQueueElement) = {
