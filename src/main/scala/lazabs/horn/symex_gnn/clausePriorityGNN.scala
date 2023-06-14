@@ -137,12 +137,12 @@ class PriorityChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends St
     //val queueElementScore = normclauseSocre //rank
     //val queueElementScore = normclauseSocre - birthTime //rank + birthTime
     //val queueElementScore = normclauseSocre - unitClauseSeqScore //rank + unitClauseSeqScore
-    val queueElementScore = normclauseSocre - birthTime - unitClauseSeqScore //rank + birthTime + unitClauseSeqScore
+    //val queueElementScore = normclauseSocre - birthTime - unitClauseSeqScore //rank + birthTime + unitClauseSeqScore
     //by score, need to shift val scores=
     //val queueElementScore = normclauseSocre * coefClauseScoreFromGNN //score
     //val queueElementScore = normclauseSocre * coefClauseScoreFromGNN + unitClauseSeqScore
     //val queueElementScore = normclauseSocre * coefClauseScoreFromGNN - birthTime ////alvis running inverse score*1000
-    //val queueElementScore = normclauseSocre * coefClauseScoreFromGNN - unitClauseSeqScore - birthTime
+    val queueElementScore = normclauseSocre * coefClauseScoreFromGNN - unitClauseSeqScore - birthTime
     //println(Console.RED_B+"priority",normclauseSocre,unitClauseSeqScore,queueElementScore.toInt)
 
     -queueElementScore.toInt
@@ -276,7 +276,7 @@ object clausePriorityGNN {
     //normalize scores
     val normalizedLogits = predictedLogitsFromGraph.map(x => (x - predictedLogitsFromGraph.min) / (predictedLogitsFromGraph.max - predictedLogitsFromGraph.min))
     val (ranks, stableRanks) = rankFloatList(normalizedLogits)
-    val scores = stableRanks
+    val scores = normalizedLogits
 
     //for CDHG map predicted (read) Logits to correct clause number, for CG just return normalized Logits
     val predictedLogits = GlobalParameters.get.hornGraphType match {
