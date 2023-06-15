@@ -44,9 +44,9 @@ class ControlledChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends 
   }
 
   def dequeue(): (NormClause, Seq[UnitClause]) = {
-    //val exploration = Random.nextDouble() > -1 //only use score queue
+    val exploration = Random.nextDouble() > -1 //only use score queue
     //val exploration = Random.nextDouble() < -1 //only use original/random queue
-    val exploration = Random.nextDouble() > 0.5 // more than 0.5 means use more random/original queue
+    //val exploration = Random.nextDouble() > 0.5 // more than 0.5 means use more random/original queue
     //println("-" * 10)
     //println(Console.BLUE + "processedMap", processedMap.size, "false", processedMap.count(_._2 == false))
     //    println(Console.BLUE + "processedHashSet.size: " + processedHashSet.size)
@@ -140,9 +140,9 @@ class PriorityChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends St
     //val queueElementScore = normclauseSocre - birthTime - unitClauseSeqScore //rank + birthTime + unitClauseSeqScore
     //by score, need to shift val scores=
     //val queueElementScore = normclauseSocre * coefClauseScoreFromGNN //score
-    //val queueElementScore = normclauseSocre * coefClauseScoreFromGNN + unitClauseSeqScore
-    //val queueElementScore = normclauseSocre * coefClauseScoreFromGNN - birthTime ////alvis running inverse score*1000
-    val queueElementScore = normclauseSocre * coefClauseScoreFromGNN - unitClauseSeqScore - birthTime
+    //val queueElementScore = normclauseSocre * coefClauseScoreFromGNN - birthTime // score + birthTime
+    //val queueElementScore = normclauseSocre * coefClauseScoreFromGNN + unitClauseSeqScore // score + unitClauseSeqScore
+    val queueElementScore = normclauseSocre * coefClauseScoreFromGNN - unitClauseSeqScore - birthTime// score + birthTime + unitClauseSeqScore
     //println(Console.RED_B+"priority",normclauseSocre,unitClauseSeqScore,queueElementScore.toInt)
 
     -queueElementScore.toInt
