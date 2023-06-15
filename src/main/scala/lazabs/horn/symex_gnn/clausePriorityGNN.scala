@@ -53,7 +53,7 @@ class ControlledChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends 
     //    println(Console.BLUE + "scoreQueue.size: " + scoreQueue.size,scoreQueue.isEmpty)
     //    println(Console.BLUE + "originalQueue.size: " + originalQueue.size,originalQueue.isEmpty)
     //    println(Console.BLUE + "exploration: " + exploration)
-    val queue = if (exploration) scoreQueue else originalQueue //if both empty, then stack overflow
+    val queue = if (exploration) scoreQueue else originalQueue
     if (queue.isEmpty) {
       dequeue()
     } else {
