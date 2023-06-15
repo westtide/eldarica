@@ -79,7 +79,7 @@ class BreadthFirstForwardSymex[CC](clauses: Iterable[CC])(
     if (unitClauseDB.isEmpty || choicesQueue.isEmpty)
       None
     else
-      Some(choicesQueue.dequeue())
+      Some(choicesQueue.dequeue()._1)
   }
 
   override def handleNewUnitClause(electron: UnitClause): Unit = {

@@ -18,14 +18,14 @@ object HornGraphType extends Enumeration {
 class ControlledChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends StateQueue {
   Random.setSeed(42)
   //val processedMap : MMap[(NormClause, Seq[UnitClause]), Boolean]=MMap()
-  val processedHashSet = new MHashSet[(NormClause, Seq[UnitClause])]()
+  val processedHashSet = new MHashSet[((NormClause, Seq[UnitClause]),TimeType)]()
   val scoreQueue =
     if (GlobalParameters.get.useGNN)
       new PriorityChoiceQueue(normClauseToScore)
     else
       new OriginalPriorityChoiceQueue()
 
-  val originalQueue = new OriginalPriorityChoiceQueue()
+  val originalQueue = new RandomPriorityChoiceQueue()
 
 
   def isEmpty: Boolean = {
@@ -43,7 +43,7 @@ class ControlledChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends 
     originalQueue.enqueue(e)
   }
 
-  def dequeue(): (NormClause, Seq[UnitClause]) = {
+  def dequeue(): ((NormClause, Seq[UnitClause]),TimeType) = {
     val exploration = Random.nextDouble() > -1 //only use score queue
     //val exploration = Random.nextDouble() < -1 //only use original/random queue
     //val exploration = Random.nextDouble() > 0.5 // more than 0.5 means use more random/original queue
@@ -54,13 +54,13 @@ class ControlledChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends 
     //    println(Console.BLUE + "originalQueue.size: " + originalQueue.size,originalQueue.isEmpty)
     //    println(Console.BLUE + "exploration: " + exploration)
     val queue = if (exploration) scoreQueue else originalQueue //if both empty, then stack overflow
-    if (queue.isEmpty)
+    if (queue.isEmpty) {
       dequeue()
-    else {
+    } else {
       val e = queue.dequeue()
-      if (processedHashSet.contains(e))
+      if (processedHashSet.contains(e)) {
         dequeue() //do nothing and go to next iteration
-      else {
+      } else {
         processedHashSet.add(e)
         e
       }
@@ -104,7 +104,7 @@ class ControlledChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends 
 }
 
 trait StateQueue {
-  type TimeType
+  type TimeType = Int
   type ChoiceQueueElement = (NormClause, Seq[UnitClause], TimeType)
 
 
@@ -114,13 +114,12 @@ trait StateQueue {
 
   def enqueue(e: (NormClause, Seq[UnitClause])): Unit
 
-  def dequeue(): (NormClause, Seq[UnitClause])
+  def dequeue(): ((NormClause, Seq[UnitClause]),TimeType)
 
   def incTime: Unit = {}
 }
 
 class PriorityChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends StateQueue {
-  type TimeType = Int
   private var time = 0
 
   //type ChoiceQueueElement = (NormClause, Seq[UnitClause])
@@ -167,10 +166,10 @@ class PriorityChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends St
     states += ((e._1, e._2, time))
   }
 
-  def dequeue(): (NormClause, Seq[UnitClause]) = {
+  def dequeue(): ((NormClause, Seq[UnitClause]),TimeType) = {
     val (nc, ucs, birthTime) = states.dequeue
     //println(Console.BLUE + "dequeue", "birthTime", birthTime)
-    (nc, ucs)
+    ((nc, ucs),birthTime)
   }
 
   override def incTime: Unit =
@@ -178,16 +177,11 @@ class PriorityChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends St
 }
 
 class OriginalPriorityChoiceQueue() extends StateQueue {
-  type TimeType = Int
   private var time = 0
-  Random.setSeed(42)
+
 
   private def priority(s: ChoiceQueueElement) = {
-    val (nc, ucs, birthTime) = s
-    //val unitClauseSeqScore = ucs.map(_.constraint.size).sum //+ nc._2.map(_.rs.arity).sum
-    //val queueElementScore = unitClauseSeqScore /constraint sum
     val queueElementScore = 1 //constant
-    //val queueElementScore = birthTime //birth time
     -queueElementScore.toInt
   }
 
@@ -206,21 +200,20 @@ class OriginalPriorityChoiceQueue() extends StateQueue {
 
   def enqueue(e: (NormClause, Seq[UnitClause])): Unit = {
     //println(Console.BLUE+"enqueue",e._1,e._2)
+    incTime
     states += ((e._1, e._2, time))
   }
 
-  def dequeue(): (NormClause, Seq[UnitClause]) = {
-    val (nc, ucs, _) = states.dequeue
-    (nc, ucs)
+  def dequeue(): ((NormClause, Seq[UnitClause]),TimeType) = {
+    val (nc, ucs, birthTime) = states.dequeue
+    ((nc, ucs),birthTime)
   }
 
   override def incTime: Unit =
     time = time + 1
 }
 
-
 class RandomPriorityChoiceQueue() extends StateQueue {
-  type TimeType = Int
   private var time = 0
   Random.setSeed(42)
 
@@ -244,12 +237,13 @@ class RandomPriorityChoiceQueue() extends StateQueue {
 
   def enqueue(e: (NormClause, Seq[UnitClause])): Unit = {
     //println(Console.BLUE+"enqueue",e._1,e._2)
+    incTime
     states += ((e._1, e._2, time))
   }
 
-  def dequeue(): (NormClause, Seq[UnitClause]) = {
-    val (nc, ucs, _) = states.dequeue
-    (nc, ucs)
+  def dequeue(): ((NormClause, Seq[UnitClause]), TimeType) = {
+    val (nc, ucs, birthTime) = states.dequeue
+    ((nc, ucs), birthTime)
   }
 
   override def incTime: Unit =
