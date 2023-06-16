@@ -23,7 +23,7 @@ class ControlledChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends 
     if (GlobalParameters.get.useGNN)
       new PriorityChoiceQueue(normClauseToScore)
     else
-      new RandomPriorityChoiceQueue()
+      new OriginalPriorityChoiceQueue()
 
   val originalQueue = new RandomPriorityChoiceQueue()
 
