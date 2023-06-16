@@ -44,9 +44,9 @@ class ControlledChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends 
   }
 
   def dequeue(): ((NormClause, Seq[UnitClause]),TimeType) = {
-    val exploration = Random.nextDouble() > -1 //only use score queue
+    //val exploration = Random.nextDouble() > -1 //only use score queue
     //val exploration = Random.nextDouble() < -1 //only use original/random queue
-    //val exploration = Random.nextDouble() > 0.5 // more than 0.5 means use more random/original queue
+    val exploration = Random.nextDouble() > 0.5 // more than 0.5 means use more random/original queue
     //println("-" * 10)
     //println(Console.BLUE + "processedMap", processedMap.size, "false", processedMap.count(_._2 == false))
     //    println(Console.BLUE + "processedHashSet.size: " + processedHashSet.size)
@@ -254,7 +254,7 @@ object clausePriorityGNN {
 
   def readClauseLabel[CC](clauses: Iterable[CC]): Map[CC, Double] = {
     val labelFileName = GlobalParameters.get.fileName + ".counterExampleIndex.JSON"
-    val labels = readJsonFieldInt(labelFileName, readLabelName = "counterExampleLabels")
+    val labels = readJsonFieldInt(labelFileName, readLabelName = "counterExampleLabels",dataLength = clauses.size)
     (for ((c, s) <- clauses.zip(labels)) yield (c, s.toDouble)).toMap
   }
 
@@ -266,7 +266,7 @@ object clausePriorityGNN {
       else
         GlobalParameters.get.fileName + "." + graphFileNameMap(GlobalParameters.get.hornGraphType) + ".JSON"
     //read logit values from graph file
-    val predictedLogitsFromGraph = readJsonFieldDouble(graphFileName, readLabelName = "predictedLabelLogit")
+    val predictedLogitsFromGraph = readJsonFieldDouble(graphFileName, readLabelName = "predictedLabelLogit",dataLength = clauses.size)
     //normalize scores
     val normalizedLogits = predictedLogitsFromGraph.map(x => (x - predictedLogitsFromGraph.min) / (predictedLogitsFromGraph.max - predictedLogitsFromGraph.min))
     val (ranks, stableRanks) = rankFloatList(normalizedLogits)
@@ -275,7 +275,7 @@ object clausePriorityGNN {
     //for CDHG map predicted (read) Logits to correct clause number, for CG just return normalized Logits
     val predictedLogits = GlobalParameters.get.hornGraphType match {
       case HornGraphType.CDHG => {
-        val labelMask = readJsonFieldInt(graphFileName, readLabelName = "labelMask")
+        val labelMask = readJsonFieldInt(graphFileName, readLabelName = "labelMask",dataLength = clauses.size)
         val originalClausesIndex = labelMask.distinct
         val separatedPredictedLabels = for (i <- originalClausesIndex) yield {
           for (ii <- (0 until labelMask.count(_ == i))) yield scores(i + ii)
@@ -299,20 +299,35 @@ object clausePriorityGNN {
     case HornGraphType.CG => "monoDirectionLayerGraph"
   }
 
-  def readJsonFieldDouble(fileName: String, readLabelName: String): Array[Double] = {
-    val json_data = readJSONFile(fileName)
-    val readLabel = (json_data \ readLabelName).validate[Array[Double]] match {
-      case JsSuccess(templateLabel, _) => templateLabel
+  def readJsonFieldInt(fileName: String, readLabelName: String, dataLength: Int = 0): Array[Int] = {
+    try {
+      val json_data = readJSONFile(fileName)
+      val readLabel = (json_data \ readLabelName).validate[Array[Int]] match {
+        case JsSuccess(templateLabel, _) => templateLabel
+      }
+      readLabel
+    } catch {
+      case _ => {
+        println(Console.RED + "read " + fileName + " failed")
+        Seq.fill(dataLength)(0).toArray
+      }
     }
-    readLabel
   }
 
-  def readJsonFieldInt(fileName: String, readLabelName: String): Array[Int] = {
-    val json_data = readJSONFile(fileName)
-    val readLabel = (json_data \ readLabelName).validate[Array[Int]] match {
-      case JsSuccess(templateLabel, _) => templateLabel
+  def readJsonFieldDouble(fileName: String, readLabelName: String, dataLength: Int = 0): Array[Double] = {
+    try {
+      val json_data = readJSONFile(fileName)
+      val readLabel = (json_data \ readLabelName).validate[Array[Double]] match {
+        case JsSuccess(templateLabel, _) => templateLabel
+      }
+      readLabel
+    } catch {
+      case _ => {
+        println(Console.RED + "read " + fileName + " failed")
+        Seq.fill(dataLength)(0.0).toArray
+      }
     }
-    readLabel
+
   }
 
   def readJSONFile(fileName: String): JsValue = {
