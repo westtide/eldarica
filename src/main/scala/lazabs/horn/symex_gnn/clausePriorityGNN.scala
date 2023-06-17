@@ -57,15 +57,19 @@ class ControlledChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends 
     val exploration = Random.nextDouble() > 0.8 // more than 0.5 means use more random/original queue
     //println("-" * 10)
     //println(Console.BLUE + "processedMap", processedMap.size, "false", processedMap.count(_._2 == false))
-    //val queue = if (exploration) scoreQueue else originalQueue // when both queue have the same last element stack overflow
-    val queue =  if (scoreQueue.isEmpty){originalQueue} else if (originalQueue.isEmpty){scoreQueue} else {if (exploration) scoreQueue else originalQueue}
+    val queue = if (exploration) scoreQueue else originalQueue // when both queue have the same last element stack overflow
+
 
     if (queue.isEmpty) {
       dequeue()
     } else {
       val e = queue.dequeue()
       if (processedHashSet.contains(e)) {
-        dequeue() //do nothing and go to next iteration
+        if (queue.isEmpty){
+          e
+        }else{
+          dequeue() //do nothing and go to next iteration
+        }
       } else {
         processedHashSet.add(e)
         e
