@@ -38,7 +38,7 @@ class ControlledChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends 
   def isEmpty: Boolean = {
     //processedMap.count(_._2 == false) == 0
     //if all element already in processedMap, then return true
-    scoreQueue.isEmpty || originalQueue.isEmpty || originalQueue.data.forall(processedHashSet.contains)|| scoreQueue.data.forall(processedHashSet.contains)
+    scoreQueue.isEmpty || originalQueue.isEmpty //|| (originalQueue.data.forall(processedHashSet.contains) && scoreQueue.data.forall(processedHashSet.contains))
   }
 
   def size: Int = {
@@ -57,7 +57,9 @@ class ControlledChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends 
     val exploration = Random.nextDouble() > 0.8 // more than 0.5 means use more random/original queue
     //println("-" * 10)
     //println(Console.BLUE + "processedMap", processedMap.size, "false", processedMap.count(_._2 == false))
-    val queue = if (exploration) scoreQueue else originalQueue // when both queue have the same last element stack overflow
+    //val queue = if (exploration) scoreQueue else originalQueue // when both queue have the same last element stack overflow
+    val queue =  if (scoreQueue.isEmpty){originalQueue} else if (originalQueue.isEmpty){scoreQueue} else {if (exploration) scoreQueue else originalQueue}
+
     if (queue.isEmpty) {
       dequeue()
     } else {
