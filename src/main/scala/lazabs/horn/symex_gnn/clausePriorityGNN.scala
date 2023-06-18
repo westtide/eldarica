@@ -52,9 +52,9 @@ class ControlledChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends 
   }
 
   def dequeue(): ((NormClause, Seq[UnitClause]),TimeType) = {
-    //val exploration = Random.nextDouble() > -1 //only use score queue
+    val exploration = Random.nextDouble() > -1 //only use score queue
     //val exploration = Random.nextDouble() < -1 //only use original/random queue
-    val exploration = Random.nextDouble() > 0.2 // more than 0.5 means use more random/original queue
+    //val exploration = Random.nextDouble() > 0.2 // more than 0.5 means use more random/original queue
     //println("-" * 10)
     //println(Console.BLUE + "processedMap", processedMap.size, "false", processedMap.count(_._2 == false))
     val queue = if (exploration) scoreQueue else originalQueue // when both queue have the same last element stack overflow
