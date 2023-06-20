@@ -259,7 +259,7 @@ object clausePriorityGNN {
     //read logit values from graph file
     val predictedLogitsFromGraph = readJsonFieldDouble(graphFileName, readLabelName = "predictedLabelLogit", dataLength = clauses.size)
     //normalize scores
-    val normalizedLogits = predictedLogitsFromGraph.map(x => (x - predictedLogitsFromGraph.min) / (predictedLogitsFromGraph.max - predictedLogitsFromGraph.min))
+    val normalizedLogits = if(predictedLogitsFromGraph.forall(_==0.0)) predictedLogitsFromGraph else predictedLogitsFromGraph.map(x => (x - predictedLogitsFromGraph.min) / (predictedLogitsFromGraph.max - predictedLogitsFromGraph.min))
     val (ranks, stableRanks) = rankFloatList(normalizedLogits)
 
     val scores =
@@ -336,8 +336,9 @@ object clausePriorityGNN {
     val rankTuple = (for (((i, v), r) <- valuesWithIndex.sortBy(_._2).reverse.zipWithIndex) yield (i, v, r)).sortBy(_._1)
     val ranks = rankTuple.map(_._3 + 1.toDouble)
 
-    val stableRankMap = values.toSet.toList.sorted.reverse.zipWithIndex.toMap
+    val stableRankMap = if (values.forall(_==0.0)) values.zipWithIndex.toMap else values.toSet.toList.sorted.reverse.zipWithIndex.toMap
     val StableRanks = for (v <- values) yield stableRankMap(v).toDouble
+
     (ranks, StableRanks)
   }
 
