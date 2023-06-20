@@ -1,6 +1,7 @@
 package lazabs.horn.symex_gnn
 
 import ap.terfor.conjunctions.Conjunction
+import ap.terfor.preds.Predicate
 import lazabs.GlobalParameters
 import lazabs.horn.bottomup.{AbstractState, HornClauses, HornTranslator, NormClause, RelationSymbol}
 import lazabs.horn.symex.UnitClause
@@ -15,49 +16,66 @@ import lazabs.horn.preprocessor.HornPreprocessor.Clauses
 
 import scala.collection.mutable
 
+/*
+-sym:1 -hornGraphType:CDHG/CG -abstract:off -prioritizeClauses:label/constant/random/score/rank/SEHPlus/SEHMinus/REHPlus/REHMinus
+*/
 object HornGraphType extends Enumeration {
   val CDHG, CG = Value
+}
+
+object PrioritizeOption extends Enumeration {
+  val label, constant, random, score, rank, SEHPlus, SEHMinus, REHPlus, REHMinus = Value
 }
 
 class ControlledChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends StateQueue {
   Random.setSeed(42)
   //val processedMap : MMap[(NormClause, Seq[UnitClause]), Boolean]=MMap()
-  val processedHashSet = new MHashSet[((NormClause, Seq[UnitClause]),TimeType)]()
-  val scoreQueue =
-    if (GlobalParameters.get.useGNN)
-      new PriorityChoiceQueue(normClauseToScore)
-    else
-      new OriginalPriorityChoiceQueue()
+  val processedHashSet = new MHashSet[((NormClause, Seq[UnitClause]), TimeType)]()
 
-  val originalQueue = new RandomPriorityChoiceQueue()
+  val priFunc: (Double, Int, Int) => Double =
+    GlobalParameters.get.prioritizeClauseOption match {
+      case PrioritizeOption.label => PriorotyQueueFunc.label
+      case PrioritizeOption.constant => PriorotyQueueFunc.constant
+      case PrioritizeOption.random => PriorotyQueueFunc.random
+      case PrioritizeOption.score => PriorotyQueueFunc.score
+      case PrioritizeOption.rank => PriorotyQueueFunc.rank
+      case PrioritizeOption.SEHPlus => PriorotyQueueFunc.SEHPlus
+      case PrioritizeOption.SEHMinus => PriorotyQueueFunc.SEHMinus
+      case PrioritizeOption.REHPlus => PriorotyQueueFunc.REHPlus
+      case PrioritizeOption.REHMinus => PriorotyQueueFunc.REHMinus
+    }
+
+  val scoreQueue = new PriorityChoiceQueue(normClauseToScore,priFunc)
+
+  val secondQueue = new PriorityChoiceQueue(normClauseToScore,PriorotyQueueFunc.random)
 
   def data: PriorityQueue[ChoiceQueueElement] = {
-    originalQueue.data
+    secondQueue.data
   }
 
   def isEmpty: Boolean = {
     //processedMap.count(_._2 == false) == 0
     //if all element already in processedMap, then return true
-    scoreQueue.isEmpty || originalQueue.isEmpty //|| (originalQueue.data.forall(processedHashSet.contains) && scoreQueue.data.forall(processedHashSet.contains))
+    scoreQueue.isEmpty || secondQueue.isEmpty //|| (originalQueue.data.forall(processedHashSet.contains) && scoreQueue.data.forall(processedHashSet.contains))
   }
 
   def size: Int = {
-    scoreQueue.size.max(originalQueue.size)
+    scoreQueue.size.max(secondQueue.size)
   }
 
   def enqueue(e: (NormClause, Seq[UnitClause])): Unit = {
     // processedMap += (e -> false)
     scoreQueue.enqueue(e)
-    originalQueue.enqueue(e)
+    secondQueue.enqueue(e)
   }
 
-  def dequeue(): ((NormClause, Seq[UnitClause]),TimeType) = {
+  def dequeue(): ((NormClause, Seq[UnitClause]), TimeType) = {
     val exploration = Random.nextDouble() > -1 //only use score queue
     //val exploration = Random.nextDouble() < -1 //only use original/random queue
     //val exploration = Random.nextDouble() > 0.2 // more than 0.5 means use more random/original queue
     //println("-" * 10)
     //println(Console.BLUE + "processedMap", processedMap.size, "false", processedMap.count(_._2 == false))
-    val queue = if (exploration) scoreQueue else originalQueue // when both queue have the same last element stack overflow
+    val queue = if (exploration) scoreQueue else secondQueue // when both queue have the same last element stack overflow
 
 
     if (queue.isEmpty) {
@@ -65,9 +83,9 @@ class ControlledChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends 
     } else {
       val e = queue.dequeue()
       if (processedHashSet.contains(e)) {
-        if (queue.isEmpty){
+        if (queue.isEmpty) {
           e
-        }else{
+        } else {
           dequeue() //do nothing and go to next iteration
         }
       } else {
@@ -118,35 +136,68 @@ trait StateQueue {
   type ChoiceQueueElement = ((NormClause, Seq[UnitClause]), TimeType)
 
   def data: PriorityQueue[ChoiceQueueElement]
+
   def isEmpty: Boolean
 
   def size: Int
 
   def enqueue(e: (NormClause, Seq[UnitClause])): Unit
 
-  def dequeue(): ((NormClause, Seq[UnitClause]),TimeType)
+  def dequeue(): ((NormClause, Seq[UnitClause]), TimeType)
 
   def incTime: Unit = {}
 }
 
-class PriorityChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends StateQueue {
-  private var time = 0
-
-  //type ChoiceQueueElement = (NormClause, Seq[UnitClause])
+object PriorotyQueueFunc {
   val coefClauseScoreFromGNN = 1000
+  def label(normclauseSocre: Double, birthTime: Int, unitClauseSeqScore: Int): Double = {
+    normclauseSocre
+  }
+  def constant(normclauseSocre: Double, birthTime: Int, unitClauseSeqScore: Int): Double = {
+    1.0
+  }
+  def random(normclauseSocre: Double, birthTime: Int, unitClauseSeqScore: Int): Double = {
+    Random.nextInt(1000).toDouble
+  }
+
+  def score(normclauseSocre: Double, birthTime: Int, unitClauseSeqScore: Int): Double = {
+    normclauseSocre*coefClauseScoreFromGNN
+  }
+  def rank = label _
+
+  def SEHPlus(normclauseSocre: Double, birthTime: Int, unitClauseSeqScore: Int): Double = {
+    normclauseSocre*coefClauseScoreFromGNN + birthTime + unitClauseSeqScore
+  }
+  def SEHMinus(normclauseSocre: Double, birthTime: Int, unitClauseSeqScore: Int): Double = {
+    normclauseSocre*coefClauseScoreFromGNN - birthTime - unitClauseSeqScore
+  }
+  def REHPlus(normclauseSocre: Double, birthTime: Int, unitClauseSeqScore: Int): Double = {
+    normclauseSocre + birthTime + unitClauseSeqScore
+  }
+  def REHMinus(normclauseSocre: Double, birthTime: Int, unitClauseSeqScore: Int): Double = {
+    normclauseSocre - birthTime - unitClauseSeqScore
+  }
+
+}
+
+class PriorityChoiceQueue(normClauseToScore: Map[NormClause, Double],priFunc:(Double, Int, Int)=>Double) extends StateQueue {
+  private var time = 0
+  Random.setSeed(42)
+  //type ChoiceQueueElement = (NormClause, Seq[UnitClause])
 
   //println(Console.BLUE+"ChoiceQueue:PriorityChoiceQueue")
   private def priority(s: ChoiceQueueElement) = {
     val ((nc, ucs), birthTime) = s
     val normclauseSocre = normClauseToScore(nc)
     val unitClauseSeqScore = ucs.map(_.constraint.size).sum //+ nc._2.map(_.rs.arity).sum
+    val queueElementScore = priFunc(normclauseSocre, birthTime,unitClauseSeqScore)
 
     //println("normclauseSocre",normclauseSocre,ucs.size,unitClauseSeqScore,birthTime)
     //by rank, need to shift val scores=
     //val queueElementScore = normclauseSocre //rank
     //val queueElementScore = normclauseSocre - birthTime //rank + birthTime
     //val queueElementScore = normclauseSocre - unitClauseSeqScore //rank + unitClauseSeqScore
-    val queueElementScore = normclauseSocre + birthTime + unitClauseSeqScore //rank + birthTime + unitClauseSeqScore
+    //val queueElementScore = normclauseSocre + birthTime + unitClauseSeqScore //rank + birthTime + unitClauseSeqScore
     //by score, need to shift val scores=
     //val queueElementScore = normclauseSocre * coefClauseScoreFromGNN //score
     //val queueElementScore = normclauseSocre * coefClauseScoreFromGNN - birthTime // score + birthTime
@@ -167,85 +218,7 @@ class PriorityChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends St
   def data: PriorityQueue[ChoiceQueueElement] = {
     states
   }
-  def isEmpty: Boolean =
-    states.isEmpty
 
-  def size: Int =
-    states.size
-
-  def enqueue(e: (NormClause, Seq[UnitClause])): Unit = {
-    incTime
-    states += (((e._1, e._2), time))
-  }
-
-  def dequeue(): ((NormClause, Seq[UnitClause]),TimeType) = {
-    val ((nc, ucs), birthTime) = states.dequeue
-    //println(Console.BLUE + "dequeue", "birthTime", birthTime)
-    ((nc, ucs),birthTime)
-  }
-
-  override def incTime: Unit =
-    time = time + 1
-}
-
-class OriginalPriorityChoiceQueue() extends StateQueue {
-  private var time = 0
-
-
-  private def priority(s: ChoiceQueueElement) = {
-    val queueElementScore = 1 //constant
-    -queueElementScore.toInt
-  }
-
-  private implicit val ord = new Ordering[ChoiceQueueElement] {
-    def compare(s: ChoiceQueueElement, t: ChoiceQueueElement) = {
-      priority(t) - priority(s)
-    }
-  }
-  private val states = new PriorityQueue[ChoiceQueueElement]
-
-  def data: PriorityQueue[ChoiceQueueElement] = {
-    states
-  }
-  def isEmpty: Boolean =
-    states.isEmpty
-
-  def size: Int =
-    states.size
-
-  def enqueue(e: (NormClause, Seq[UnitClause])): Unit = {
-    incTime
-    states += (((e._1, e._2), time))
-  }
-
-  def dequeue(): ((NormClause, Seq[UnitClause]),TimeType) = {
-    val ((nc, ucs), birthTime) = states.dequeue
-    ((nc, ucs),birthTime)
-  }
-
-  override def incTime: Unit =
-    time = time + 1
-}
-
-class RandomPriorityChoiceQueue() extends StateQueue {
-  private var time = 0
-  Random.setSeed(42)
-
-  private def priority(s: ChoiceQueueElement) = {
-    val queueElementScore = Random.nextInt(1000) //random
-    -queueElementScore.toInt
-  }
-
-  private implicit val ord = new Ordering[ChoiceQueueElement] {
-    def compare(s: ChoiceQueueElement, t: ChoiceQueueElement) = {
-      priority(t) - priority(s)
-    }
-  }
-  private val states = new PriorityQueue[ChoiceQueueElement]
-
-  def data: PriorityQueue[ChoiceQueueElement] = {
-    states
-  }
   def isEmpty: Boolean =
     states.isEmpty
 
@@ -259,6 +232,7 @@ class RandomPriorityChoiceQueue() extends StateQueue {
 
   def dequeue(): ((NormClause, Seq[UnitClause]), TimeType) = {
     val ((nc, ucs), birthTime) = states.dequeue
+    //println(Console.BLUE + "dequeue", "birthTime", birthTime)
     ((nc, ucs), birthTime)
   }
 
@@ -266,11 +240,12 @@ class RandomPriorityChoiceQueue() extends StateQueue {
     time = time + 1
 }
 
+
 object clausePriorityGNN {
 
   def readClauseLabel[CC](clauses: Iterable[CC]): Map[CC, Double] = {
     val labelFileName = GlobalParameters.get.fileName + ".counterExampleIndex.JSON"
-    val labels = readJsonFieldInt(labelFileName, readLabelName = "counterExampleLabels",dataLength = clauses.size)
+    val labels = readJsonFieldInt(labelFileName, readLabelName = "counterExampleLabels", dataLength = clauses.size)
     (for ((c, s) <- clauses.zip(labels)) yield (c, s.toDouble)).toMap
   }
 
@@ -282,16 +257,21 @@ object clausePriorityGNN {
       else
         GlobalParameters.get.fileName + "." + graphFileNameMap(GlobalParameters.get.hornGraphType) + ".JSON"
     //read logit values from graph file
-    val predictedLogitsFromGraph = readJsonFieldDouble(graphFileName, readLabelName = "predictedLabelLogit",dataLength = clauses.size)
+    val predictedLogitsFromGraph = readJsonFieldDouble(graphFileName, readLabelName = "predictedLabelLogit", dataLength = clauses.size)
     //normalize scores
     val normalizedLogits = predictedLogitsFromGraph.map(x => (x - predictedLogitsFromGraph.min) / (predictedLogitsFromGraph.max - predictedLogitsFromGraph.min))
     val (ranks, stableRanks) = rankFloatList(normalizedLogits)
-    val scores = stableRanks
+
+    val scores =
+      if (GlobalParameters.get.prioritizeClauseOption == PrioritizeOption.score || GlobalParameters.get.prioritizeClauseOption == PrioritizeOption.SEHPlus || GlobalParameters.get.prioritizeClauseOption == PrioritizeOption.SEHMinus)
+        normalizedLogits
+      else
+        stableRanks
 
     //for CDHG map predicted (read) Logits to correct clause number, for CG just return normalized Logits
     val predictedLogits = GlobalParameters.get.hornGraphType match {
       case HornGraphType.CDHG => {
-        val labelMask = readJsonFieldInt(graphFileName, readLabelName = "labelMask",dataLength = clauses.size)
+        val labelMask = readJsonFieldInt(graphFileName, readLabelName = "labelMask", dataLength = clauses.size)
         val originalClausesIndex = labelMask.distinct
         val separatedPredictedLabels = for (i <- originalClausesIndex) yield {
           for (ii <- (0 until labelMask.count(_ == i))) yield scores(i + ii)

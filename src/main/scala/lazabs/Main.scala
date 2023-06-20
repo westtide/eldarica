@@ -34,7 +34,7 @@ import java.io.{FileInputStream, FileNotFoundException, InputStream}
 import parser._
 import lazabs.art._
 import lazabs.art.SearchMethod._
-import lazabs.horn.symex_gnn.HornGraphType
+import lazabs.horn.symex_gnn.{HornGraphType, PrioritizeOption}
 import lazabs.prover._
 import lazabs.viewer._
 import lazabs.utils.Inline._
@@ -142,6 +142,7 @@ class GlobalParameters extends Cloneable {
   var timeoutChecker : () => Unit = () => ()
   var hornGraphType : HornGraphType.Value = HornGraphType.CDHG
   var useGNN = false
+  var prioritizeClauseOption=PrioritizeOption.constant
 
   def needFullSolution = assertions || displaySolutionProlog || displaySolutionSMT
   def needFullCEX = assertions || plainCEX || !pngNo
@@ -232,6 +233,7 @@ class GlobalParameters extends Cloneable {
     that.timeoutChecker = this.timeoutChecker
     that.hornGraphType = this.hornGraphType
     that.useGNN = this.useGNN
+    that.prioritizeClauseOption = this.prioritizeClauseOption
   }
 
   override def clone : GlobalParameters = {
@@ -402,6 +404,42 @@ object Main {
       case "-hornGraphType:CDHG" :: rest => {
         useGNN = true
         hornGraphType = HornGraphType.CDHG
+        arguments(rest)
+      }
+      case "-prioritizeClauses:label" :: rest => {
+        prioritizeClauseOption = PrioritizeOption.label
+        arguments(rest)
+      }
+      case "-prioritizeClauses:constant" :: rest => {
+        prioritizeClauseOption = PrioritizeOption.constant
+        arguments(rest)
+      }
+      case "-prioritizeClauses:random" :: rest => {
+        prioritizeClauseOption = PrioritizeOption.random
+        arguments(rest)
+      }
+      case "-prioritizeClauses:score" :: rest => {
+        prioritizeClauseOption = PrioritizeOption.score
+        arguments(rest)
+      }
+      case "-prioritizeClauses:rank" :: rest => {
+        prioritizeClauseOption = PrioritizeOption.rank
+        arguments(rest)
+      }
+      case "-prioritizeClauses:SEHPlus" :: rest => {
+        prioritizeClauseOption = PrioritizeOption.SEHPlus
+        arguments(rest)
+      }
+      case "-prioritizeClauses:SEHMinus" :: rest => {
+        prioritizeClauseOption = PrioritizeOption.SEHMinus
+        arguments(rest)
+      }
+      case "-prioritizeClauses:REHPlus" :: rest => {
+        prioritizeClauseOption = PrioritizeOption.REHPlus
+        arguments(rest)
+      }
+      case "-prioritizeClauses:REHMinus" :: rest => {
+        prioritizeClauseOption = PrioritizeOption.REHMinus
         arguments(rest)
       }
       case tTimeout :: rest if (tTimeout.startsWith("-abstractTO:")) =>
