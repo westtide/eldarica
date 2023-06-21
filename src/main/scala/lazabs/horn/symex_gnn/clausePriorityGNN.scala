@@ -304,7 +304,8 @@ object clausePriorityGNN {
       readLabel
     } catch {
       case _ => {
-        println(Console.RED + "read " + fileName + " failed")
+        if(GlobalParameters.get.log)
+          println(Console.RED + "read " + fileName + " failed")
         Seq.fill(dataLength)(0).toArray
       }
     }
@@ -319,7 +320,8 @@ object clausePriorityGNN {
       readLabel
     } catch {
       case _ => {
-        println(Console.RED + "read " + fileName + " failed")
+        if(GlobalParameters.get.log)
+          println(Console.RED + "read " + fileName + " failed")
         Seq.fill(dataLength)(0.0).toArray
       }
     }
