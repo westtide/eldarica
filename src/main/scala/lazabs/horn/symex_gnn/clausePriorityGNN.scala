@@ -24,7 +24,7 @@ object HornGraphType extends Enumeration {
 }
 
 object PrioritizeOption extends Enumeration {
-  val label, constant, random, score, rank, SEHPlus, SEHMinus, REHPlus, REHMinus = Value
+  val label, constant, random, score, rank, SEHPlus, SEHMinus, REHPlus, REHMinus, twoQueue02, twoQueue05,twoQueue08 = Value
 }
 
 class ControlledChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends StateQueue {
@@ -43,6 +43,9 @@ class ControlledChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends 
       case PrioritizeOption.SEHMinus => PriorotyQueueFunc.SEHMinus
       case PrioritizeOption.REHPlus => PriorotyQueueFunc.REHPlus
       case PrioritizeOption.REHMinus => PriorotyQueueFunc.REHMinus
+      case PrioritizeOption.twoQueue02 => PriorotyQueueFunc.twoQueue02
+      case PrioritizeOption.twoQueue05 => PriorotyQueueFunc.twoQueue05
+      case PrioritizeOption.twoQueue08 => PriorotyQueueFunc.twoQueue08
     }
 
   val scoreQueue = new PriorityChoiceQueue(normClauseToScore,priFunc)
@@ -70,9 +73,11 @@ class ControlledChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends 
   }
 
   def dequeue(): ((NormClause, Seq[UnitClause]), TimeType) = {
-    val exploration = Random.nextDouble() > -1 //only use score queue
-    //val exploration = Random.nextDouble() < -1 //only use original/random queue
-    //val exploration = Random.nextDouble() > 0.2 // more than 0.5 means use more random/original queue
+    val exploration = if(GlobalParameters.get.prioritizeClauseOption == PrioritizeOption.twoQueue02) Random.nextDouble() > 0.2
+    else if(GlobalParameters.get.prioritizeClauseOption == PrioritizeOption.twoQueue05) Random.nextDouble() > 0.5
+    else if(GlobalParameters.get.prioritizeClauseOption == PrioritizeOption.twoQueue08) Random.nextDouble() > 0.8
+    else Random.nextDouble() > -1
+
     //println("-" * 10)
     //println(Console.BLUE + "processedMap", processedMap.size, "false", processedMap.count(_._2 == false))
     val queue = if (exploration) scoreQueue else secondQueue // when both queue have the same last element stack overflow
@@ -178,6 +183,9 @@ object PriorotyQueueFunc {
     normclauseSocre - birthTime - unitClauseSeqScore
   }
 
+  def twoQueue02 = REHMinus _
+  def twoQueue05 = REHMinus _
+  def twoQueue08 = REHMinus _
 }
 
 class PriorityChoiceQueue(normClauseToScore: Map[NormClause, Double],priFunc:(Double, Int, Int)=>Double) extends StateQueue {
@@ -193,16 +201,6 @@ class PriorityChoiceQueue(normClauseToScore: Map[NormClause, Double],priFunc:(Do
     val queueElementScore = priFunc(normclauseSocre, birthTime,unitClauseSeqScore)
 
     //println("normclauseSocre",normclauseSocre,ucs.size,unitClauseSeqScore,birthTime)
-    //by rank, need to shift val scores=
-    //val queueElementScore = normclauseSocre //rank
-    //val queueElementScore = normclauseSocre - birthTime //rank + birthTime
-    //val queueElementScore = normclauseSocre - unitClauseSeqScore //rank + unitClauseSeqScore
-    //val queueElementScore = normclauseSocre + birthTime + unitClauseSeqScore //rank + birthTime + unitClauseSeqScore
-    //by score, need to shift val scores=
-    //val queueElementScore = normclauseSocre * coefClauseScoreFromGNN //score
-    //val queueElementScore = normclauseSocre * coefClauseScoreFromGNN - birthTime // score + birthTime
-    //val queueElementScore = normclauseSocre * coefClauseScoreFromGNN + unitClauseSeqScore // score + unitClauseSeqScore
-    //val queueElementScore = normclauseSocre * coefClauseScoreFromGNN - unitClauseSeqScore - birthTime// score + birthTime + unitClauseSeqScore
     //println(Console.RED_B+"priority",normclauseSocre,unitClauseSeqScore,queueElementScore.toInt)
 
     -queueElementScore.toInt

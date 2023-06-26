@@ -442,6 +442,18 @@ object Main {
         prioritizeClauseOption = PrioritizeOption.REHMinus
         arguments(rest)
       }
+      case "-prioritizeClauses:twoQueue02" :: rest => {
+        prioritizeClauseOption = PrioritizeOption.twoQueue02
+        arguments(rest)
+      }
+      case "-prioritizeClauses:twoQueue05" :: rest => {
+        prioritizeClauseOption = PrioritizeOption.twoQueue05
+        arguments(rest)
+      }
+      case "-prioritizeClauses:twoQueue08" :: rest => {
+        prioritizeClauseOption = PrioritizeOption.twoQueue08
+        arguments(rest)
+      }
       case tTimeout :: rest if (tTimeout.startsWith("-abstractTO:")) =>
         templateBasedInterpolationTimeout =
           (java.lang.Float.parseFloat(tTimeout.drop(12)) * 1000).toInt;
