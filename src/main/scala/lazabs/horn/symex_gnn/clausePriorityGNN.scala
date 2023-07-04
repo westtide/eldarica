@@ -24,7 +24,7 @@ object HornGraphType extends Enumeration {
 }
 
 object PrioritizeOption extends Enumeration {
-  val label, constant, random, score, rank, SEHPlus, SEHMinus, REHPlus, REHMinus, twoQueue02, twoQueue05,twoQueue08 = Value
+  val label, constant, random, score, rank, SEHPlus, SEHMinus, REHPlus, REHMinus, twoQueue02, twoQueue05,twoQueue08,schedule10,schedule100,schedule1000 = Value
 }
 
 class ControlledChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends StateQueue {
@@ -46,11 +46,22 @@ class ControlledChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends 
       case PrioritizeOption.twoQueue02 => PriorotyQueueFunc.twoQueue02
       case PrioritizeOption.twoQueue05 => PriorotyQueueFunc.twoQueue05
       case PrioritizeOption.twoQueue08 => PriorotyQueueFunc.twoQueue08
+      case PrioritizeOption.schedule10=> PriorotyQueueFunc.schedule10
+      case PrioritizeOption.schedule100=> PriorotyQueueFunc.schedule100
+      case PrioritizeOption.schedule1000=> PriorotyQueueFunc.schedule1000
     }
+  val scheduleCount= GlobalParameters.get.prioritizeClauseOption match {
+    case PrioritizeOption.schedule10 => 10
+    case PrioritizeOption.schedule100 => 100
+    case PrioritizeOption.schedule1000 => 1000
+    case _ => 2
+  }
 
   val scoreQueue = new PriorityChoiceQueue(normClauseToScore,priFunc)
+  var scoreQueueCount=0
 
   val secondQueue = new PriorityChoiceQueue(normClauseToScore,PriorotyQueueFunc.random)
+  var secondQueueCount=0
 
   def data: PriorityQueue[ChoiceQueueElement] = {
     secondQueue.data
@@ -72,65 +83,102 @@ class ControlledChoiceQueue(normClauseToScore: Map[NormClause, Double]) extends 
     secondQueue.enqueue(e)
   }
 
-  def dequeue(): ((NormClause, Seq[UnitClause]), TimeType) = {
-    val exploration = if(GlobalParameters.get.prioritizeClauseOption == PrioritizeOption.twoQueue02) Random.nextDouble() > 0.2
-    else if(GlobalParameters.get.prioritizeClauseOption == PrioritizeOption.twoQueue05) Random.nextDouble() > 0.5
-    else if(GlobalParameters.get.prioritizeClauseOption == PrioritizeOption.twoQueue08) Random.nextDouble() > 0.8
-    else Random.nextDouble() > -1
-
-    //println("-" * 10)
-    //println(Console.BLUE + "processedMap", processedMap.size, "false", processedMap.count(_._2 == false))
-    val queue = if (exploration) scoreQueue else secondQueue // when both queue have the same last element stack overflow
-
+  def _scheduleDequeue(): ((NormClause, Seq[UnitClause]), TimeType) = {
+    val queue=
+      if (scoreQueueCount < scheduleCount) {
+        scoreQueueCount += 1
+        scoreQueue
+      }
+      else if (secondQueueCount < scheduleCount) {
+        secondQueueCount += 1
+        secondQueue
+      } else {
+        scoreQueueCount = 0
+        secondQueueCount = 0
+        scoreQueue
+      }
 
     if (queue.isEmpty) {
-      dequeue()
+      _scheduleDequeue()
     } else {
       val e = queue.dequeue()
       if (processedHashSet.contains(e)) {
         if (queue.isEmpty) {
           e
         } else {
-          dequeue() //do nothing and go to next iteration
+          _scheduleDequeue() //do nothing and go to next iteration
         }
       } else {
         processedHashSet.add(e)
         e
       }
     }
+  }
 
-    //        if (exploration == true) {
-    //          //println("dequeue scoreQueue")
-    //          while (true) {
-    //            if (scoreQueue.isEmpty) {
-    //              return originalQueue.dequeue()
-    //            }
-    //            else {
-    //              val e = scoreQueue.dequeue()
-    //              if (processedMap(e) == false) {
-    //                processedMap(e) = true
-    //                return e
-    //              }
-    //            }
-    //          }
-    //          scoreQueue.dequeue()
-    //        } else {
-    //          //println("dequeue originalQueue")
-    //          while (true) {
-    //            if (originalQueue.isEmpty) {
-    //              return scoreQueue.dequeue()
-    //            }
-    //            else {
-    //              val e = originalQueue.dequeue()
-    //              if (processedMap(e) == false) {
-    //                processedMap(e) = true
-    //                return e
-    //              }
-    //            }
-    //          }
-    //          originalQueue.dequeue()
-    //        }
-    //
+  def _randomDequeue(): ((NormClause, Seq[UnitClause]), TimeType)  = {
+    val exploration = if (GlobalParameters.get.prioritizeClauseOption == PrioritizeOption.twoQueue02) Random.nextDouble() > 0.2
+    else if (GlobalParameters.get.prioritizeClauseOption == PrioritizeOption.twoQueue05) Random.nextDouble() > 0.5
+    else if (GlobalParameters.get.prioritizeClauseOption == PrioritizeOption.twoQueue08) Random.nextDouble() > 0.8
+    else Random.nextDouble() > -1
+    val queue = if (exploration) scoreQueue else secondQueue // when both queue have the same last element stack overflow
+
+
+    if (queue.isEmpty) {
+      _randomDequeue()
+    } else {
+      val e = queue.dequeue()
+      if (processedHashSet.contains(e)) {
+        if (queue.isEmpty) {
+          e
+        } else {
+          _randomDequeue() //do nothing and go to next iteration
+        }
+      } else {
+        processedHashSet.add(e)
+        e
+      }
+    }
+  }
+
+  def _scoreDequeue(): ((NormClause, Seq[UnitClause]), TimeType) = {
+    scoreQueue.dequeue()
+  }
+  def dequeue(): ((NormClause, Seq[UnitClause]), TimeType) = {
+    if (GlobalParameters.get.prioritizeClauseOption == PrioritizeOption.schedule100)
+      _scheduleDequeue()
+    else if(GlobalParameters.get.prioritizeClauseOption == PrioritizeOption.twoQueue02 || GlobalParameters.get.prioritizeClauseOption == PrioritizeOption.twoQueue05 || GlobalParameters.get.prioritizeClauseOption == PrioritizeOption.twoQueue08 || GlobalParameters.get.prioritizeClauseOption == PrioritizeOption.random)
+      _randomDequeue()
+    else
+      _scoreDequeue()
+
+//
+//    val exploration = if(GlobalParameters.get.prioritizeClauseOption == PrioritizeOption.twoQueue02) Random.nextDouble() > 0.2
+//    else if(GlobalParameters.get.prioritizeClauseOption == PrioritizeOption.twoQueue05) Random.nextDouble() > 0.5
+//    else if(GlobalParameters.get.prioritizeClauseOption == PrioritizeOption.twoQueue08) Random.nextDouble() > 0.8
+//    else Random.nextDouble() > -1
+//
+//    //println("-" * 10)
+//
+//    val queue = if (exploration) scoreQueue else secondQueue // when both queue have the same last element stack overflow
+//
+//
+//
+//    if (queue.isEmpty) {
+//      dequeue()
+//    } else {
+//      val e = queue.dequeue()
+//      if (processedHashSet.contains(e)) {
+//        if (queue.isEmpty) {
+//          e
+//        } else {
+//          dequeue() //do nothing and go to next iteration
+//        }
+//      } else {
+//        processedHashSet.add(e)
+//        e
+//      }
+//    }
+
   }
 
 
@@ -186,6 +234,9 @@ object PriorotyQueueFunc {
   def twoQueue02 = REHMinus _
   def twoQueue05 = REHMinus _
   def twoQueue08 = REHMinus _
+  def schedule10 = REHMinus _
+  def schedule100 = REHMinus _
+  def schedule1000 = REHMinus _
 }
 
 class PriorityChoiceQueue(normClauseToScore: Map[NormClause, Double],priFunc:(Double, Int, Int)=>Double) extends StateQueue {

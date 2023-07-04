@@ -454,6 +454,18 @@ object Main {
         prioritizeClauseOption = PrioritizeOption.twoQueue08
         arguments(rest)
       }
+      case "-prioritizeClauses:schedule10" :: rest => {
+        prioritizeClauseOption = PrioritizeOption.schedule10
+        arguments(rest)
+      }
+      case "-prioritizeClauses:schedule100" :: rest => {
+        prioritizeClauseOption = PrioritizeOption.schedule100
+        arguments(rest)
+      }
+      case "-prioritizeClauses:schedule1000" :: rest => {
+        prioritizeClauseOption = PrioritizeOption.schedule1000
+        arguments(rest)
+      }
       case tTimeout :: rest if (tTimeout.startsWith("-abstractTO:")) =>
         templateBasedInterpolationTimeout =
           (java.lang.Float.parseFloat(tTimeout.drop(12)) * 1000).toInt;
