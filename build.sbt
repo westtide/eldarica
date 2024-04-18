@@ -129,8 +129,11 @@ lazy val root = (project in file(".")).
       case "2.12.10" => "-opt:_"
     }}).value,	
 //
-    libraryDependencies +=
-      "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.4",
+//    libraryDependencies +=
+//      "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.4",
+libraryDependencies +=
+      "org.scala-lang.modules" %% "scala-parser-combinators" % "2.2.0",
+
 //
     libraryDependencies +=
       "net.sf.squirrel-sql.thirdparty-non-maven" % "java-cup" % "0.11a",
