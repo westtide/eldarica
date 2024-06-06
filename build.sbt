@@ -7,7 +7,7 @@ lazy val commonSettings = Seq(
     licenses := Seq("BSD License 2.0" -> url("https://github.com/uuverifiers/eldarica/blob/master/LICENSE")),
     scalaVersion := "2.11.12",
     crossScalaVersions := Seq("2.11.12", "2.12.10"),
-    fork in run := true,
+    fork := true,
     cancelable in Global := true,
     publishTo := Some(Resolver.file("file",  new File( "/home/wv/public_html/maven/" )) )
 )
@@ -15,8 +15,8 @@ lazy val commonSettings = Seq(
 // Jar files for the parsers
 
 lazy val parserSettings = Seq(
-    publishArtifact in packageDoc := false,
-    publishArtifact in packageSrc := false,
+    packageDoc / publishArtifact := false,
+    packageSrc / publishArtifact := false,
     exportJars := true,
     crossPaths := true 
 )
@@ -24,8 +24,8 @@ lazy val parserSettings = Seq(
 // Parser generation
 
 lazy val parserGen = Seq(
-  sourceGenerators in Compile += Def.task {
-          val outputDir = (sourceManaged in Compile).value / "parser"
+  Compile / sourceGenerators += Def.task {
+          val outputDir = (Compile / sourceManaged).value / "parser"
           val base = baseDirectory.value
           
           val cacheDir = outputDir / ".cache"
@@ -89,7 +89,7 @@ lazy val ccParser = (project in file("cc-parser")).
   settings(parserSettings: _*).
   settings(
     name := "Eldarica-CC-parser",
-    packageBin in Compile := baseDirectory.value / "cc-parser.jar"
+    Compile / packageBin := baseDirectory.value / "cc-parser.jar"
   ).
   disablePlugins(AssemblyPlugin)
 
@@ -98,7 +98,7 @@ lazy val tplspecParser = (project in file("template-parser")).
   settings(parserSettings: _*).
   settings(
     name := "Eldarica-tplspec-parser",
-    packageBin in Compile := baseDirectory.value / "tplspec-parser.jar"
+    Compile / packageBin := baseDirectory.value / "tplspec-parser.jar"
   ).
   disablePlugins(AssemblyPlugin)
 
@@ -111,17 +111,17 @@ lazy val root = (project in file(".")).
     settings(commonSettings: _*).
 //
     settings(
-      scalaSource in Compile := baseDirectory.value / "src",
+      Compile / scalaSource := baseDirectory.value / "src",
 //
-      mainClass in Compile := Some("lazabs.Main"),
+      Compile / mainClass := Some("lazabs.Main"),
 //
-      unmanagedJars in Compile ++= (baseDirectory map { base =>
+      Compile / unmanagedJars ++= (baseDirectory map { base =>
         val baseDirectories = (base / "flata")
         val customJars = (baseDirectories ** "*.jar")
         customJars.classpath
       }).value,
 //
-    scalacOptions in Compile ++=
+    Compile / scalacOptions ++=
       List("-feature",
            "-language:implicitConversions,postfixOps,reflectiveCalls"),
     scalacOptions += (scalaVersion map { sv => sv match {

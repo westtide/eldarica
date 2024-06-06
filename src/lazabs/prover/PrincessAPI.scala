@@ -416,13 +416,15 @@ abstract class AbstractPrincessAPI extends PrincessAPI {
                            case INamedPart(`part`, _) => true
                            case _ => false
                          }).getOrElse(false))
-      
-      Console.withOut(interpolationFile) {
-        SMTLineariser(sortedFormulas, signature,
-                      "Eldarica interpolation query " + interpolationCount)
-      }
-      interpolationFile.close
-      interpolationCount = interpolationCount + 1
+
+    Console.withOut(interpolationFile) {
+      SMTLineariser.printWithDeclsSig(
+        formulas      = sortedFormulas,
+        signature     = signature,
+        benchmarkName = "Eldarica interpolation query " + interpolationCount)
+    }
+    interpolationFile.close
+    interpolationCount = interpolationCount + 1
   }
 
   def interpolate(problem : IFormula,
