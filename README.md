@@ -1,3 +1,8 @@
+Push History
+============
+2024-06-06: Fixed compile issues encountered during 'sbt assembly', including errors related to the 'SMTLineariser' function and type mismatches in method calls.
+Dependencies: sbt 1.10.0, Zulu JDK 11.
+
 Eldarica
 ========
 
